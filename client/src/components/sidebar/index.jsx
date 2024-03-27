@@ -33,8 +33,8 @@ const Sidebar = ({ open, onClose }) => {
       <div className={`mx-[30px] mt-[50px] flex items-center`}>
         <div className="h-1.5 font-bold  text-navy-700 dark:text-white flex items-center justify-center gap-3">
           <img src={logo} alt="" width={30}/>
-          <p className="text-[#F40000] text-[22px]">Ratail</p> 
-          <span className="font-medium text-[#C10000] text-[22px]">Flash</span>
+          <p className="text-[#000] text-[22px]">Ratail</p> 
+          <span className="font-medium text-[#000] text-[22px]">Flash</span>
         </div>
       </div>
       <div class="mt-[30px] mb-7 h-px bg-gray-300 dark:bg-white/30" />
