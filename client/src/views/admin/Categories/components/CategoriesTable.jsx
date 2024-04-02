@@ -8,7 +8,7 @@ import axios from 'axios'
 import { MdPostAdd } from "react-icons/md"
 import Modal from 'react-modal';
 
-function IncomeTable() {
+function CategoriesTable() {
     const formattedDate = new Date().toLocaleDateString();
     const [isModalOpen, setIsModalOpen] = useState(false);
 const MuiCache = createCache({
@@ -362,4 +362,4 @@ const handleAddNewTransaction = () => {
   )
 }
 
-export default IncomeTable
+export default CategoriesTable
