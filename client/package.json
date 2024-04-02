@@ -1,5 +1,5 @@
 {
-  "name": "Cash Flow",
+  "name": "Ratail Flash",
   "version": "1.0.0",
   "proxy": "http://localhost:9000/",
   "private": true,

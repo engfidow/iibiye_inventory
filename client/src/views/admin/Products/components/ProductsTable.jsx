@@ -19,8 +19,12 @@ function ProductsTable() {
     selling_price: '',
     quantity: '',
     status: '',
-    image: null,
+    
+    Category: '',
+    
+    
   });
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,13 +43,21 @@ function ProductsTable() {
 
   };
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setModalFormData({ ...modalFormData, [name]: value });
+    const { name, value, files } = e.target;
+  
+    if (files && files.length > 0) {
+      const file = files[0];
+      setImagePreview(URL.createObjectURL(file));
+      // Set the file within modalFormData for form submission
+      setModalFormData(prevState => ({ ...prevState, image: file }));
+    } else {
+      // Update other form data without overwriting the entire state
+      setModalFormData(prevState => ({ ...prevState, [name]: value }));
+    }
   };
+  
 
-  const handleFileChange = (e) => {
-    setModalFormData({ ...modalFormData, image: e.target.files[0] });
-  };
+  
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -127,45 +139,47 @@ function ProductsTable() {
 
       <Modal isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} style={customModalStyles}>
         <h2 style={{ color: '#333', marginBottom: '20px' }}>Add New Product</h2>
+        {/* Preview image */}
+        {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
+            />
+            
+          )}
         <form onSubmit={handleFormSubmit} className='grid grid-cols-2 gap-3'>
-          <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required style={inputStyle} />
-          <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required style={inputStyle} />
-          <input type="number" name="selling_price" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.selling_price} required style={inputStyle} />
-          <input type="number" name="quantity" placeholder="Quantity" onChange={handleInputChange} value={modalFormData.quantity} required style={inputStyle} />
-          <select name="status" onChange={handleInputChange} value={modalFormData.status} required style={{ ...inputStyle, appearance: 'auto' }}>
+        
+          <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
+          <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
+          <input type="number" name="price" placeholder="Price" onChange={handleInputChange} value={modalFormData.price} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
+          <input type="number" name="selling_price" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.selling_price} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
+          
+          <select name="status" onChange={handleInputChange} value={modalFormData.status} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full'>
             <option value="">Select Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <input type="file" name="image" onChange={handleFileChange} style={inputStyle} />
-          <button type="submit" style={submitButtonStyle}>Submit</button>
-          <button
+          <select name="Category" onChange={handleInputChange} value={modalFormData.Category} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full'>
+            <option value="">Select Category</option>
+            <option value="active">Electronics</option>
+            <option value="clothes">Clothes</option>
+            <option value="food">Food</option>
+          </select>
+          <input type="number" name="quantity" placeholder="Quantity" onChange={handleInputChange} value={modalFormData.quantity} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
+          <input type="file" name="image" onChange={handleInputChange} className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
           
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
-          onClick={closeModal}
-        >closse</button>
+          <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
+          <button  onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
         </form>
+        <h1 className='p-3 my-2 rounded-md border-solid border-blue-300 w-full'></h1>
       </Modal>
     </div>
   );
 }
 
-const inputStyle = {
-  padding: '10px',
-  margin: '5px 0',
-  borderRadius: '5px',
-  border: '1px solid #ccc',
-  width: '100%',
-};
 
-const submitButtonStyle = {
-  backgroundColor: '#4CAF50',
-  color: 'white',
-  padding: '10px',
-  border: 'none',
-  borderRadius: '5px',
-  cursor: 'pointer',
-  marginTop: '10px',
-};
+
+
 
 export default ProductsTable;
