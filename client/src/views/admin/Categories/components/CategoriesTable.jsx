@@ -16,16 +16,15 @@ const MuiCache = createCache({
   prepend:true
 })
 
-const[income ,setIncome] = useState([]);
-
+const[Categories ,setCategories] = useState([]);
 
 
 const fetchData = async () => {
     try {
       
-      const xogta = await axios.get('http://localhost:5000/api/income/get');
-      const reslty = xogta.data;
-      setIncome(reslty);
+      const CategoriesData = await axios.get('http://localhost:5000/api/Categories/get');
+      const reslty = CategoriesData.data;
+      setCategories(reslty);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
@@ -46,22 +45,21 @@ const[printBtn , setprint] = useState(true);
 const[veiColumnsBtn , setveiwColumns] = useState(true);
 const[filterBtn, setfilter]= useState(true);
 
-const [selectedIncome, setSelectedIncome] = useState(null);
+const [selectedCategories, setSelectedCategories] = useState(null);
 
 const handleRowClick = (rowData, rowMeta) => {
   
   const selectedRowIndex = rowMeta.dataIndex;
-  const selectedExpense = income[selectedRowIndex];
-  setSelectedIncome(selectedExpense);
+  const selectedExpense = Categories[selectedRowIndex];
+  setSelectedCategories(selectedExpense);
   setBtnUpdate(true);
   setBtnSave(false);
   setIsModalOpen(true);
 };
 
 const columns =[
-  "ID",
-  "Amount",
-  "Descriptions",
+  
+  "Categorie Name",
   "Date",
   
 
@@ -91,17 +89,14 @@ const [formSubmitted, setFormSubmitted] = useState(false);
 
     // State for form data
     const [formData, setFormData] = useState({
-        id: "",
-        amount: "",
-        description: "",
+       
+        Categories: "",
         date: "",
         
     });
     const resetFormData = () => {
       setFormData({
-        id: "",
-        amount: "",
-        description: "",
+        Categories: "",
         date: "",
       });
     };
@@ -111,42 +106,41 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     };
 
     useEffect(() => {
-      if (selectedIncome) {
+      if (selectedCategories) {
         setFormData({
-          id: selectedIncome.IncomeID,
-          amount: selectedIncome.Amount,
-          description: selectedIncome.Description,
-          date: selectedIncome.date,
+          
+          Categories: selectedCategories.Description,
+          date: selectedCategories.date,
         });
       }
-    }, [selectedIncome]);
+    }, [selectedCategories]);
     const handleUpdate = async (e) => {
       e.preventDefault();
       setFormSubmitted(true);
     
-      if (formData.amount === "" || formData.description === "" || formattedDate === "") {
+      if (formData.Categories === "" || formattedDate === "") {
         // Handle empty fields
         return;
       }
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const updateUrl = `http://localhost:5000/api/income/${formData.id}`;
+        const updateUrl = `http://localhost:5000/api/Categories/${formData.id}`;
     
         // Make a PUT request to update the expense by ID
         const response = await axios.put(updateUrl, {
-          amount: formData.amount,
-          description: formData.description,
+          
+          Categories: formData.Categories,
           date: formData.date,
         });
     
-        alert("Updated This Transaction:", response.data);
+        alert("Updated This Categories:", response.data);
         fetchData();
         resetFormData();
         setIsModalOpen(false);
         // Handle successful update, redirect user, etc.
       } catch (error) {
-        console.error("Error updating transaction:", error.response.data);
+        console.error("Error updating Categories:", error.response.data);
         // Handle update error (e.g., display error message)
       }
     };
@@ -162,18 +156,18 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const deleteUrl = `http://localhost:5000/api/income/delete${formData.id}`;
+        const deleteUrl = `http://localhost:5000/api/Categories/delete${formData.id}`;
     
         // Make a DELETE request to delete the expense by ID
         const response = await axios.delete(deleteUrl);
     
-        alert("Deleted This Transaction:", response.data);
+        alert("Deleted This Categories:", response.data);
         fetchData();
         resetFormData();
         setIsModalOpen(false);
         // Handle successful deletion, redirect user, etc.
       } catch (error) {
-        console.error("Error deleting transaction:", error.response.data);
+        console.error("Error deleting Categories:", error.response.data);
         // Handle deletion error (e.g., display error message)
       }
     };
@@ -183,7 +177,7 @@ const handleFormSubmit = async (e) => {
     e.preventDefault();
     setFormSubmitted(true);
    
-    if (formData.amount === "" || formData.description === "" || formattedDate === "") {
+    if (formData.Categories === "" || formattedDate === "") {
       alert("Please fill in all the fields before submitting!");
       return;
     }
@@ -193,20 +187,20 @@ const handleFormSubmit = async (e) => {
     try {
      
         // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('http://localhost:5000/api/income', {
-            amount: formData.amount,
-            description: formData.description,
+        const response = await axios.post('http://localhost:5000/api/Categories', {
+          
+            Categories: formData.Categories,
             date: formData.date
            
         });
 
-        alert("Registered This Transaction :", response.data);
+        alert("Registered This Categories :", response.data);
         fetchData();
         resetFormData();
         setIsModalOpen(false);
         // Handle successful registration, redirect user, etc.
     } catch (error) {
-        console.error("Error registering user:", error.response.data);
+        console.error("Error registering Categories:", error.response.data);
         // Handle registration error (e.g., display error message)
     }
 };
@@ -235,51 +229,26 @@ const handleAddNewTransaction = () => {
   style={{ overlay: { zIndex: 51 }, content: { width: '400px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' } }}
 >    <form onSubmit={handleFormSubmit}>
       <div className="mb-4">
-        <h2 className="text-lg font-bold mb-4">Add New Transaction</h2>
-        {/* <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Id
-        </label>
-        <input
-          type="text"
-          id="field1"
-          name="id"
-          value={formData.id}
-          onChange={handleInputChange}
-          
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        /> */}
+        <h2 className="text-lg font-bold mb-4">Add New Categories</h2>
         
-        <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Amount
-        </label>
-        <input
-          pattern="[0-9]*"
-          type="text"
-          id="field1"
-          name="amount"
-          value={formData.amount}
-          onChange={handleInputChange}
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && isNaN(formData.amount) && (
-              <label className="text-red-700 text-xs">Please enter a valid number.</label>
-            )}
+        
+        
       </div>
       <div className="mb-4">
         <label htmlFor="field2" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Description
+         Categories Name
         </label>
         <input
           type="text"
-          name="description"
+          name="Categories"
           id="field2"
-          value={formData.description}
+          value={formData.Categories}
           onChange={handleInputChange}
           pattern="[a-zA-Z]*"
           title="Please enter characters (a-z) only."
           className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
         />
-        {formSubmitted && !/^[a-zA-Z]*$/.test(formData.description) && (
+        {formSubmitted && !/^[a-zA-Z]*$/.test(formData.Categories) && (
               <label className="text-red-700 text-xs">Please enter valid characters (a-z and A-Z) only.</label>
             )}
       </div>
@@ -342,14 +311,14 @@ const handleAddNewTransaction = () => {
           <ThemeProvider theme={createTheme()}>
             <button
               type="button"
-              className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 "
+              className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 "
               onClick={handleAddNewTransaction}
             >
-              <MdPostAdd className="text-lg" /> Add New Transaction
+              <MdPostAdd className="text-lg" /> Add New Categories
             </button>
             <MUIDatatable
-              title={"Income report"}
-              data={income.map((Income) => [Income.IncomeID, Income.Amount, Income.Description, Income.DateAdded])}
+              title={"Categories report"}
+              data={Categories.map((Categories) => [Categories.CategoriesID, Categories.Categories, Categories.DateAdded])}
               columns={columns}
               options={options}
               
