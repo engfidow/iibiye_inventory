@@ -49,7 +49,7 @@ const Dashboard = () => {
         />
         <Widget
           icon={<IoMdHome className="h-6 w-6" />}
-          title={"Total Projects"}
+          title={"Total Products"}
           subtitle={"$2433"}
         />
       </div>

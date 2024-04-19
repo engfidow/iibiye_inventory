@@ -59,9 +59,9 @@ const handleRowClick = (rowData, rowMeta) => {
 };
 
 const columns =[
-  "ID",
-  "Amount",
-  "Descriptions",
+  "Payment Method",
+  "Customer Email",
+  "Total Amount",
   "Date",
   
 
@@ -340,15 +340,15 @@ const handleAddNewTransaction = () => {
        
         <CacheProvider value={MuiCache}>
           <ThemeProvider theme={createTheme()}>
-            <button
+            {/* <button
               type="button"
               className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 "
               onClick={handleAddNewTransaction}
             >
               <MdPostAdd className="text-lg" /> Add New Transaction
-            </button>
+            </button> */}
             <MUIDatatable
-              title={"Income report"}
+              title={"Report"}
               data={income.map((Income) => [Income.IncomeID, Income.Amount, Income.Description, Income.DateAdded])}
               columns={columns}
               options={options}

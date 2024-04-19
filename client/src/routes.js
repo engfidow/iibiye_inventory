@@ -30,6 +30,7 @@ import Products from "./views/admin/Products/Products";
 import Categories from "views/admin/Categories";
 import Transaction from "views/admin/Transactions";
 import Reports from "views/admin/Reports";
+import UserManagement from "views/admin/UsersManagement";
 
 const routes = [
   {
@@ -67,6 +68,13 @@ const routes = [
     icon: <MdBarChart className="h-6 w-6" />,
     path: "reports",
     component: <Reports />,
+  },
+  {
+    name: "Users Management",
+    layout: "/admin",
+    icon: <MdPerson className="h-6 w-6" />,
+    path: "usermanagement",
+    component: <UserManagement />,
   },
   {
     name: "Profile",

@@ -16,16 +16,16 @@ const MuiCache = createCache({
   prepend:true
 })
 
-const[income ,setIncome] = useState([]);
+const[Transaction ,setTransaction] = useState([]);
 
 
 
 const fetchData = async () => {
     try {
       
-      const xogta = await axios.get('http://localhost:5000/api/income/get');
+      const xogta = await axios.get('http://localhost:5000/api/Transaction/get');
       const reslty = xogta.data;
-      setIncome(reslty);
+      setTransaction(reslty);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
@@ -46,22 +46,23 @@ const[printBtn , setprint] = useState(true);
 const[veiColumnsBtn , setveiwColumns] = useState(true);
 const[filterBtn, setfilter]= useState(true);
 
-const [selectedIncome, setSelectedIncome] = useState(null);
+const [selectedTransaction, setSelectedTransaction] = useState(null);
 
 const handleRowClick = (rowData, rowMeta) => {
   
   const selectedRowIndex = rowMeta.dataIndex;
-  const selectedExpense = income[selectedRowIndex];
-  setSelectedIncome(selectedExpense);
+  const selectedExpense = Transaction[selectedRowIndex];
+  setSelectedTransaction(selectedExpense);
   setBtnUpdate(true);
   setBtnSave(false);
   setIsModalOpen(true);
 };
 
 const columns =[
-  "ID",
-  "Amount",
-  "Descriptions",
+  
+  "Payment Method",
+  "Customer Email",
+  "Total Amount",
   "Date",
   
 
@@ -111,15 +112,15 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     };
 
     useEffect(() => {
-      if (selectedIncome) {
+      if (selectedTransaction) {
         setFormData({
-          id: selectedIncome.IncomeID,
-          amount: selectedIncome.Amount,
-          description: selectedIncome.Description,
-          date: selectedIncome.date,
+          id: selectedTransaction.TransactionID,
+          amount: selectedTransaction.Amount,
+          description: selectedTransaction.Description,
+          date: selectedTransaction.date,
         });
       }
-    }, [selectedIncome]);
+    }, [selectedTransaction]);
     const handleUpdate = async (e) => {
       e.preventDefault();
       setFormSubmitted(true);
@@ -131,7 +132,7 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const updateUrl = `http://localhost:5000/api/income/${formData.id}`;
+        const updateUrl = `http://localhost:5000/api/Transaction/${formData.id}`;
     
         // Make a PUT request to update the expense by ID
         const response = await axios.put(updateUrl, {
@@ -162,7 +163,7 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const deleteUrl = `http://localhost:5000/api/income/delete${formData.id}`;
+        const deleteUrl = `http://localhost:5000/api/Transaction/delete${formData.id}`;
     
         // Make a DELETE request to delete the expense by ID
         const response = await axios.delete(deleteUrl);
@@ -193,7 +194,7 @@ const handleFormSubmit = async (e) => {
     try {
      
         // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('http://localhost:5000/api/income', {
+        const response = await axios.post('http://localhost:5000/api/Transaction', {
             amount: formData.amount,
             description: formData.description,
             date: formData.date
@@ -340,16 +341,16 @@ const handleAddNewTransaction = () => {
        
         <CacheProvider value={MuiCache}>
           <ThemeProvider theme={createTheme()}>
-            <button
+            {/* <button
               type="button"
               className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 "
               onClick={handleAddNewTransaction}
             >
               <MdPostAdd className="text-lg" /> Add New Transaction
-            </button>
+            </button> */}
             <MUIDatatable
-              title={"Income report"}
-              data={income.map((Income) => [Income.IncomeID, Income.Amount, Income.Description, Income.DateAdded])}
+              title={"Transaction List"}
+              data={Transaction.map((Transaction) => [Transaction.TransactionID, Transaction.Amount, Transaction.Description, Transaction.DateAdded])}
               columns={columns}
               options={options}
               

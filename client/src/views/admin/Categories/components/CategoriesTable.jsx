@@ -317,7 +317,7 @@ const handleAddNewTransaction = () => {
               <MdPostAdd className="text-lg" /> Add New Categories
             </button>
             <MUIDatatable
-              title={"Categories report"}
+              title={"Categories List"}
               data={Categories.map((Categories) => [Categories.CategoriesID, Categories.Categories, Categories.DateAdded])}
               columns={columns}
               options={options}

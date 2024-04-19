@@ -10,8 +10,8 @@ import createCache from '@emotion/cache';
 // Modal accessibility setup
 Modal.setAppElement('#root');
 
-function ProductsTable() {
-  const [products, setProducts] = useState([]);
+function UserManagementTable() {
+  const [UserManagement, setUserManagement] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [validationMessages, setValidationMessages] = useState({});
   const [modalFormData, setModalFormData] = useState({
@@ -28,15 +28,15 @@ function ProductsTable() {
   const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchUserManagement = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/products');
-        setProducts(response.data);
+        const response = await axios.get('http://localhost:5000/api/UserManagement');
+        setUserManagement(response.data);
       } catch (error) {
-        console.error('Failed to fetch products:', error);
+        console.error('Failed to fetch UserManagement:', error);
       }
     };
-    fetchProducts();
+    fetchUserManagement();
   }, []);
   const closeModal = () => {
    
@@ -101,16 +101,16 @@ function ProductsTable() {
     });
     if (!validateForm()) return; // Stop form submission if validation fails
     try {
-      await axios.post('http://localhost:5000/products', formData, {
+      await axios.post('http://localhost:5000/UserManagement', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      alert('Product added successfully');
+      alert('UserManagement added successfully');
       setIsModalOpen(false);
       setModalFormData({ uid: '', name: '', selling_price: '', quantity: '', status: '', image: null }); // Reset form
     } catch (error) {
-      console.error('Failed to submit product:', error);
+      console.error('Failed to submit UserManagement:', error);
     }
   };
 
@@ -142,15 +142,15 @@ function ProductsTable() {
       label: 'Image',
       options: {
         customBodyRender: (value) => {
-          return <img src={value} alt="Product" style={{ height: '50px' }} />;
+          return <img src={value} alt="UserManagement" style={{ height: '50px' }} />;
         },
       },
     },
-    'uid', 'name', 'selling_price', 'quantity', 'status'
+     'name', 'email', 'password', 'user type'
   ];
 
-  const data = products.map((product) => [
-    product.image, product.uid, product.name, product.selling_price, product.quantity, product.status
+  const data = UserManagement.map((UserManagement) => [
+    UserManagement.image, UserManagement.uid, UserManagement.name, UserManagement.selling_price, UserManagement.quantity, UserManagement.status
   ]);
 
   const options = {
@@ -163,16 +163,16 @@ function ProductsTable() {
         onClick={() => setIsModalOpen(true)}
         className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 "
       >
-        <MdPostAdd /> Add New Product
+        <MdPostAdd /> Add New User
       </button>
       <CacheProvider value={MuiCache}>
         <ThemeProvider theme={createTheme()}>
-          <MUIDataTable title={'Product List'} data={data} columns={columns} options={options} />
+          <MUIDataTable title={'Users List'} data={data} columns={columns} options={options} />
         </ThemeProvider>
       </CacheProvider>
 
       <Modal isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} style={customModalStyles}>
-        <h2 style={{ color: '#333', marginBottom: '20px' }}>Add New Product</h2>
+        <h2 style={{ color: '#333', marginBottom: '20px' }}>Add New Usert</h2>
         {/* Preview image */}
         {imagePreview && (
             <img
@@ -184,24 +184,14 @@ function ProductsTable() {
           )}
         <form onSubmit={handleFormSubmit} className='grid grid-cols-2 gap-3'>
         
-          <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          {validationMessages.uid && <p className="text-red-500">{validationMessages.uid}</p>}
+          {/* <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
+          {validationMessages.uid && <p className="text-red-500">{validationMessages.uid}</p>} */}
           <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          <input type="number" name="price" placeholder="Price" onChange={handleInputChange} value={modalFormData.price} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          <input type="number" name="selling_price" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.selling_price} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
+          <input type="email" name="email" placeholder="email" onChange={handleInputChange} value={modalFormData.price} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
+          <input type="password" name="password" placeholder="enter user pasword" onChange={handleInputChange} value={modalFormData.selling_price} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
           
-          <select name="status" onChange={handleInputChange} value={modalFormData.status} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full'>
-            <option value="">Select Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <select name="Category" onChange={handleInputChange} value={modalFormData.Category} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full'>
-            <option value="">Select Category</option>
-            <option value="active">Electronics</option>
-            <option value="clothes">Clothes</option>
-            <option value="food">Food</option>
-          </select>
-          <input type="number" name="quantity" placeholder="Quantity" onChange={handleInputChange} value={modalFormData.quantity} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
+          
+          <input type="text" name="usertype" placeholder="user type" onChange={handleInputChange} value={modalFormData.quantity} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
           <input type="file" name="image" onChange={handleInputChange} className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
           
           <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
@@ -217,4 +207,4 @@ function ProductsTable() {
 
 
 
-export default ProductsTable;
+export default UserManagementTable;
