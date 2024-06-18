@@ -1,21 +1,26 @@
 import React from "react";
-
 import { FiAlignJustify } from "react-icons/fi";
 import { Link } from "react-router-dom";
-
-
 import { FiSearch } from "react-icons/fi";
 import { RiMoonFill, RiSunFill } from "react-icons/ri";
-
-import avatar from "assets/user.png";
 import Dropdown from "components/dropdown";
 
 const Navbar = (props) => {
-  const {user,setUser, onOpenSidenav, brandText } = props;
+  const { user, setUser, onOpenSidenav, brandText } = props;
   const [darkmode, setDarkmode] = React.useState(false);
 
+  const handleLogout = () => {
+    // Clear localStorage and perform any additional logout actions
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+    // Redirect to the login page
+    window.location.href = '/login';
+  };
+
+  const userImage = user.image ? `http://localhost:5000/${user.image}` : 'path_to_default_avatar_image';
+
   return (
-    <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
+    <nav className="sticky top-4 z-30 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
       <div className="ml-[6px]">
         <div className="h-6 w-[224px] pt-1">
           <a
@@ -53,7 +58,7 @@ const Navbar = (props) => {
           <input
             type="text"
             placeholder="Search..."
-            class="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit"
+            className="block h-full w-full rounded-full bg-lightPrimary text-sm font-medium text-navy-700 outline-none placeholder:!text-gray-400 dark:bg-navy-900 dark:text-white dark:placeholder:!text-white sm:w-fit"
           />
         </div>
         <span
@@ -62,7 +67,7 @@ const Navbar = (props) => {
         >
           <FiAlignJustify className="h-5 w-5" />
         </span>
-      
+
         <div
           className="cursor-pointer text-gray-600"
           onClick={() => {
@@ -86,8 +91,8 @@ const Navbar = (props) => {
           button={
             <img
               className="h-10 w-10 rounded-full"
-              src={avatar}
-              alt="Elon Musk"
+              src={userImage}
+              alt={user.name}
             />
           }
           children={
@@ -95,22 +100,19 @@ const Navbar = (props) => {
               <div className="p-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-navy-700 dark:text-white">
-                    👋 Hey, {user}
+                    👋 Hey, {user.name}
                   </p>{" "}
                 </div>
               </div>
               <div className="h-px w-full bg-gray-200 dark:bg-white/20 " />
 
               <div className="flex flex-col p-4">
-                
-               
-                
-                <a
-                  href="/login"
+                <button
+                  onClick={handleLogout}
                   className="mt-3 text-sm font-medium text-red-500 hover:text-red-500"
                 >
                   Log Out
-                </a>
+                </button>
               </div>
             </div>
           }

@@ -1,32 +1,37 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const TransactionSchema = new mongoose.Schema({
+const TransactionSchema = new mongoose.Schema(
+  {
     userCustomerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'UserCustomer',
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UserCustomer",
+      required: true,
     },
-    userCustomerEmail: {
-        type: String,
-        required: true,
-    },
-    productsList: [{
-        productId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product',
+    productsList: [
+      {
+        productUid: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
         },
-        quantity: Number,
-    }],
+      },
+    ],
     paymentMethod: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
+    },
+    paymentPhone: {
+      type: Number,
+      required: true,
     },
     totalPrice: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
-}, {
+  },
+  {
     timestamps: true,
-});
+  }
+);
 
-module.exports = mongoose.model('Transaction', TransactionSchema);
+module.exports = mongoose.model("Transaction", TransactionSchema);

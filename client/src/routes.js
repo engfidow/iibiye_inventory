@@ -41,6 +41,13 @@ const routes = [
     component: <Dashboard />,
   },
   {
+    name: "Dashboard",
+    layout: "/user",
+    path: "default",
+    icon: <MdHome className="h-6 w-6" />,
+    component: <Dashboard />,
+  },
+  {
     name: "Products",
     layout: "/admin",
     path: "products",
@@ -49,8 +56,23 @@ const routes = [
     secondary: true,
   },
   {
+    name: "Products",
+    layout: "/user",
+    path: "products",
+    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
+    component: <Products />,
+    secondary: true,
+  },
+  {
     name: "Categories",
     layout: "/admin",
+    icon: <BiCategory className="h-6 w-6" />,
+    path: "Categories",
+    component: <Categories />,
+  },
+  {
+    name: "Categories",
+    layout: "/user",
     icon: <BiCategory className="h-6 w-6" />,
     path: "Categories",
     component: <Categories />,
@@ -79,6 +101,13 @@ const routes = [
   {
     name: "Profile",
     layout: "/admin",
+    icon: <MdPerson className="h-6 w-6" />,
+    path: "profile",
+    component: <Profile />,
+  },
+  {
+    name: "Profile",
+    layout: "/user",
     icon: <MdPerson className="h-6 w-6" />,
     path: "profile",
     component: <Profile />,

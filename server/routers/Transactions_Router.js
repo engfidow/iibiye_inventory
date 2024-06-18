@@ -1,11 +1,18 @@
 const express = require('express');
-const transactionsController = require('../controllers/Transactions_Controller');
 const router = express.Router();
+const transactionController = require('../controllers/Transactions_Controller');
 
-// Routes for Transactions
-router.post('/transactions', transactionsController.createTransaction);
-router.get('/transactions', transactionsController.getAllTransactions);
-router.patch('/transactions/:id', transactionsController.updateTransaction);
-router.delete('/transactions/:id', transactionsController.deleteTransaction);
+// CRUD routes
+router.post('/transactions', transactionController.createTransaction);
+router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions/:id', transactionController.getTransaction);
+router.put('/transactions/:id', transactionController.updateTransaction);
+router.delete('/transactions/:id', transactionController.deleteTransaction);
+
+// Route to get transactions with product details
+router.get('/transactions/details', transactionController.getTransactionsWithProductDetails);
+
+// Route to get transactions by user ID
+router.get('/transactions/user/:userId', transactionController.getTransactionByUserId);
 
 module.exports = router;

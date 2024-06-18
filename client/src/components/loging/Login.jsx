@@ -1,224 +1,322 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import * as Components from './Components';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-// import { useAuth } from '../../AuthContext';
-function Login({setUser}) {
-    const navigate = useNavigate();
-    const [signIn, toggle] = useState(true);
-    const [passwordVisible, setPasswordVisible] = useState(false);
-    const [formSubmitted, setFormSubmitted] = useState(false);
-  
-    // State for form data
-    const [formData, setFormData] = useState({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-  
-    const [formLoginData, setLoginFormData] = useState({
-      email: "",
-      password: "",
-    });
-  
-    const handleInputChange = (e) => {
-      const { name, value } = e.target;
+import Cookies from 'js-cookie';
+import ClipLoader from 'react-spinners/ClipLoader';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
+
+function Login({ setUser }) {
+  const navigate = useNavigate();
+  const [signIn, toggle] = useState(true);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    gender: "",
+    image: null,
+  });
+
+  const [formLoginData, setLoginFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData((prevData) => ({ ...prevData, [name]: files[0] }));
+      setImagePreview(URL.createObjectURL(files[0]));
+    } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
-    };
-  
-    const handleInputChangeLogin = (e) => {
-      const { name, value } = e.target;
-      setLoginFormData((prevData) => ({ ...prevData, [name]: value }));
-    };
-  
-    const handleTogglePasswordVisibility = () => {
-      setPasswordVisible((prevVisible) => !prevVisible);
-    };
-  
-    const validateEmail = (email) => {
-      // Use a regular expression for basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    };
-  
-    const validatePasswordComplexity = (password) => {
-      // Add your password complexity requirements here
-      // For example, require at least 8 characters
-      return password.length >= 6;
-    };
+    }
+  };
 
-  
-    const handleFormSubmit = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-  
-      if (
-        formData.name === "" ||
-        formData.email === "" ||
-        formData.password === "" ||
-        formData.confirmPassword === ""
-      ) {
-        // Handle empty fields
-        return;
-      }
-  
-      if (!validateEmail(formData.email)) {
-        alert("Please enter a valid email address");
-        return;
-      }
-  
-      if (!validatePasswordComplexity(formData.password)) {
-        alert("Password must be at least 6 characters long");
-        return;
-      }
-  
-      if (formData.password !== formData.confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-      }
-  
-      try {
-        // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('http://localhost:5000/api/users', {
-          username: formData.name,
-          email: formData.email,
-          password: formData.password,
+  const handleInputChangeLogin = (e) => {
+    const { name, value } = e.target;
+    setLoginFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setPasswordVisible((prevVisible) => !prevVisible);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePasswordComplexity = (password) => {
+    return password.length >= 6;
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setFormSubmitted(true);
+
+    if (
+      formData.name === "" ||
+      formData.email === "" ||
+      formData.password === "" ||
+      formData.confirmPassword === "" ||
+      formData.gender === "" ||
+      !formData.image
+    ) {
+      return;
+    }
+
+    if (!validateEmail(formData.email)) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Invalid Email',
+        text: 'Please enter a valid email address',
+        confirmButtonColor: '#F40000',
+      });
+      return;
+    }
+
+    if (!validatePasswordComplexity(formData.password)) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Weak Password',
+        text: 'Password must be at least 6 characters long',
+        confirmButtonColor: '#F40000',
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Password Mismatch',
+        text: 'Passwords do not match!',
+        confirmButtonColor: '#F40000',
+      });
+      return;
+    }
+
+    const formDataWithDefaults = new FormData();
+    formDataWithDefaults.append('name', formData.name);
+    formDataWithDefaults.append('email', formData.email);
+    formDataWithDefaults.append('password', formData.password);
+    formDataWithDefaults.append('gender', formData.gender);
+    formDataWithDefaults.append('image', formData.image);
+    formDataWithDefaults.append('usertype', 'user');
+
+    setLoading(true);
+    try {
+      await axios.post('http://localhost:5000/api/users/signup', formDataWithDefaults);
+
+      // Auto-login after successful registration
+      const loginResponse = await axios.post('http://localhost:5000/api/users/login', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      const { user, token } = loginResponse.data;
+      setUser(user);
+      Cookies.set('user', JSON.stringify(user), { expires: 7 });
+      Cookies.set('token', token, { expires: 7 });
+
+      MySwal.fire({
+        icon: 'success',
+        title: 'Registration Successful',
+        text: 'You have been registered and logged in successfully',
+        confirmButtonColor: '#F40000',
+      });
+
+      navigate(user.usertype === 'admin' ? '/admin/default' : '/user/default');
+    } catch (error) {
+      if (error.response && error.response.status === 400 && error.response.data.message === 'Email already exists') {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Email Exists',
+          text: 'Email already exists, please use a different email',
+          confirmButtonColor: '#F40000',
         });
-  
-        alert("User registered:", response.data);
-        toggle(true);
-        // Handle successful registration, redirect user, etc.
-      } catch (error) {
-        console.error("Error registering user:", error.response.data);
-        // Handle registration error (e.g., display error message)
-      }
-    };
-  
-    const handleFormSubmitLogin = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-  
-      if (formLoginData.email === "" || formLoginData.password === "") {
-        // Handle empty fields
-        return;
-      }
-  
-      if (!validateEmail(formLoginData.email)) {
-        alert("Please enter a valid email address");
-        return;
-      }
-  
-      try {
-        // Make a POST request to your backend endpoint for user authentication
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
-          email: formLoginData.email,
-          password: formLoginData.password,
+      } else {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: 'An error occurred during registration',
+          confirmButtonColor: '#F40000',
         });
-  
-        // If the request is successful, navigate to the '/' route
-        if (response.status === 200) {
-          alert('Login successful');
-          setUser(formLoginData.email); // Update authentication status
-  
-          const user = formLoginData.email;
-          sessionStorage.setItem('user', user);
-          navigate('/admin'); // Redirect to the admin page
-        } else {
-          // Handle unexpected response status
-          console.error('Unexpected response status during login:', response.status);
-        }
-      } catch (error) {
-        // Handle login error (e.g., display error message)
-        console.error('Error during login:', error.response.data);
-        alert('Email or password is incorrect'); // Display a user-friendly message
       }
-    };
-      
+      console.error("Error registering user:", error.response.data);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-     return(
-         <Components.Container>
-             <Components.SignUpContainer signinIn={signIn}>
-                 <Components.Form onSubmit={handleFormSubmit}>
-                    <Components.Title>Create Account</Components.Title>
-                    <Components.Input
-                        type='text'
-                        name='name'
-                        placeholder='Name'
-                        pattern="[a-zA-Z]*"
-                        title="Please enter characters (a-z) only."
-                        onChange={handleInputChange}
-                    />
-                     {(formSubmitted && formData.name === "") && <label className="text-red-700 text-xs">Please enter your name</label>}
-                    <Components.Input
-                        type='email'
-                        name='email'
-                        placeholder='Email'
-                        onChange={handleInputChange}
-                    />
-                     {(formSubmitted && formData.email === "") && <label className="text-red-700 text-xs">Please enter your email</label>}
-                    <Components.Input
-                        type={passwordVisible ? 'text' : 'password'}
-                        name='password'
-                        placeholder='Password'
-                        onChange={handleInputChange}
-                    />
-                     {(formSubmitted && formData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
+  const handleFormSubmitLogin = async (e) => {
+    e.preventDefault();
+    setFormSubmitted(true);
 
-                    <Components.Input
-                        type={passwordVisible ? 'text' : 'password'}
-                        name='confirmPassword'
-                        placeholder='Confirm Password'
-                        onChange={handleInputChange}
-                    />
-                    {(formSubmitted && formData.confirmPassword === "") && <label className="text-red-700 text-xs">Please confirm your password</label>}
-                    {/* <Components.PasswordToggle onClick={handleTogglePasswordVisibility}>
-                        {passwordVisible ? "Hide Password" : "Show Password"}
-                    </Components.PasswordToggle> */}
-                    <Components.Button type='submit'>Sign Up</Components.Button>
-                </Components.Form>
-             </Components.SignUpContainer>
+    if (formLoginData.email === "" || formLoginData.password === "") {
+      return;
+    }
 
-             <Components.SignInContainer signinIn={signIn}>
-                  <Components.Form onSubmit={handleFormSubmitLogin}>
-                      <Components.Title>Sign in</Components.Title>
-                      <Components.Input  type='email' placeholder='Email' name='email' onChange={handleInputChangeLogin}/>
-                      {(formSubmitted && formLoginData.email === "") && <label className="text-red-700 text-xs">Please enter your email</label>}
-                      <Components.Input type='password' placeholder='Password' name='password' onChange={handleInputChangeLogin}/>
-                      {(formSubmitted && formLoginData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
-                      <Components.Anchor href='#'>Forgot your password?</Components.Anchor>
-                      <Components.Button type='submit'>Sigin In</Components.Button>
-                  </Components.Form>
-             </Components.SignInContainer>
+    if (!validateEmail(formLoginData.email)) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Invalid Email',
+        text: 'Please enter a valid email address',
+        confirmButtonColor: '#F40000',
+      });
+      return;
+    }
 
-             <Components.OverlayContainer signinIn={signIn}>
-                 <Components.Overlay signinIn={signIn}>
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/users/login', formLoginData);
 
-                 <Components.LeftOverlayPanel signinIn={signIn}>
-                     <Components.Title>Welcome Back!</Components.Title>
-                     <Components.Paragraph>
-                         To keep connected with us please login with your personal info
-                     </Components.Paragraph>
-                     <Components.GhostButton onClick={() => toggle(true)}>
-                         Sign In
-                     </Components.GhostButton>
-                     </Components.LeftOverlayPanel>
+      if (response.status === 200) {
+        const { user, token } = response.data;
+        setUser(user);
+        Cookies.set('user', JSON.stringify(user), { expires: 7 });
+        Cookies.set('token', token, { expires: 7 });
 
-                     <Components.RightOverlayPanel signinIn={signIn}>
-                       <Components.Title>Hello, Customer!</Components.Title>
-                       <Components.Paragraph>
-                           Enter Your personal details and start journey with us
-                       </Components.Paragraph>
-                           <Components.GhostButton onClick={() => toggle(false)}>
-                               Sigin Up
-                           </Components.GhostButton> 
-                     </Components.RightOverlayPanel>
- 
-                 </Components.Overlay>
-             </Components.OverlayContainer>
+        MySwal.fire({
+          icon: 'success',
+          title: 'Login Successful',
+          text: 'You have been logged in successfully',
+          confirmButtonColor: '#F40000',
+        });
 
-         </Components.Container>
-     )
+        navigate(user.usertype === 'admin' ? '/admin/default' : '/user/default');
+      } else {
+        console.error('Unexpected response status during login:', response.status);
+      }
+    } catch (error) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: 'Email or password is incorrect',
+        confirmButtonColor: '#F40000',
+      });
+      console.error('Error during login:', error.response.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className=" p-8 rounded-lg w-full max-w-md">
+        {signIn ? (
+          <Components.Form onSubmit={handleFormSubmitLogin}>
+            <Components.Title>Sign in</Components.Title>
+            <Components.Input
+              type='email'
+              placeholder='Email'
+              name='email'
+              onChange={handleInputChangeLogin}
+            />
+            {(formSubmitted && formLoginData.email === "") && <label className="text-red-700 text-xs">Please enter your email</label>}
+            <div className="relative w-full">
+              <Components.Input
+                type={passwordVisible ? 'text' : 'password'}
+                placeholder='Password'
+                name='password'
+                onChange={handleInputChangeLogin}
+              />
+              <span
+                onClick={handleTogglePasswordVisibility}
+                className="absolute inset-y-0 right-4 flex items-center cursor-pointer text-gray-500"
+              >
+                <FontAwesomeIcon icon={passwordVisible ? faEyeSlash : faEye} />
+              </span>
+            </div>
+            {(formSubmitted && formLoginData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
+            <Components.Anchor href='#'>Forgot your password?</Components.Anchor>
+            <Components.Button type="submit">
+              {loading ? <ClipLoader size={20} color={"#fff"} /> : 'Sign In'}
+            </Components.Button>
+            <Components.GhostButton onClick={() => toggle(false)}>Sign Up</Components.GhostButton>
+          </Components.Form>
+        ) : (
+          <Components.Form onSubmit={handleFormSubmit}>
+            <Components.Title>Create Account</Components.Title>
+            {imagePreview && (
+              <img src={imagePreview} alt="Preview" className="mx-auto h-20 w-20 rounded-full object-cover mb-4" />
+            )}
+            <Components.Input
+              type='text'
+              name='name'
+              placeholder='Name'
+              pattern="[a-zA-Z\s]*"
+              title="Please enter characters (a-z) only."
+              onChange={handleInputChange}
+            />
+            {(formSubmitted && formData.name === "") && <label className="text-red-700 text-xs">Please enter your name</label>}
+            <Components.Input
+              type='email'
+              name='email'
+              placeholder='Email'
+              onChange={handleInputChange}
+            />
+            {(formSubmitted && formData.email === "") && <label className="text-red-700 text-xs">Please enter your email</label>}
+            <div className="relative w-full">
+              <Components.Input
+                type={passwordVisible ? 'text' : 'password'}
+                name='password'
+                placeholder='Password'
+                onChange={handleInputChange}
+              />
+              <span
+                onClick={handleTogglePasswordVisibility}
+                className="absolute inset-y-0 right-4 flex items-center cursor-pointer text-gray-500"
+              >
+                <FontAwesomeIcon icon={passwordVisible ? faEyeSlash : faEye} />
+              </span>
+            </div>
+            {(formSubmitted && formData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
+            <Components.Input
+              type={passwordVisible ? 'text' : 'password'}
+              name='confirmPassword'
+              placeholder='Confirm Password'
+              onChange={handleInputChange}
+            />
+            {(formSubmitted && formData.confirmPassword === "") && <label className="text-red-700 text-xs">Please confirm your password</label>}
+            <Components.Input
+              type='file'
+              name='image'
+              accept="image/png, image/jpeg"
+              onChange={handleInputChange}
+            />
+            {(formSubmitted && !formData.image) && <label className="text-red-700 text-xs">Please upload an image</label>}
+            <select
+              name='gender'
+              onChange={handleInputChange}
+              className="p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full"
+              defaultValue=""
+            >
+              <option value="" disabled>Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            {(formSubmitted && formData.gender === "") && <label className="text-red-700 text-xs">Please select your gender</label>}
+            <Components.Button type="submit">
+              {loading ? <ClipLoader size={20} color={"#fff"} /> : 'Sign Up'}
+            </Components.Button>
+            <Components.GhostButton onClick={() => toggle(true)}>Sign In</Components.GhostButton>
+          </Components.Form>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default Login;

@@ -1,117 +1,244 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Modal from 'react-modal';
-import { MdPostAdd } from 'react-icons/md';
+import { MdPostAdd, MdDelete, MdEdit, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import MUIDataTable from 'mui-datatables';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import CircularProgress from '@mui/material/CircularProgress';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 // Modal accessibility setup
 Modal.setAppElement('#root');
 
 function UserManagementTable() {
-  const [UserManagement, setUserManagement] = useState([]);
+  const [users, setUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false); // Loading state for form submission
   const [validationMessages, setValidationMessages] = useState({});
   const [modalFormData, setModalFormData] = useState({
-    uid: '',
     name: '',
-    selling_price: '',
-    quantity: '',
-    status: '',
-    
-    Category: '',
-    
-    
+    email: '',
+    password: '',
+    usertype: '',
+    gender: '',
+    image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [btnUpdate, setBtnUpdate] = useState(false);
+  const [btnSave, setBtnSave] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showPassword, setShowPassword] = useState(false); // State for show/hide password
 
   useEffect(() => {
-    const fetchUserManagement = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/UserManagement');
-        setUserManagement(response.data);
-      } catch (error) {
-        console.error('Failed to fetch UserManagement:', error);
-      }
-    };
-    fetchUserManagement();
+    fetchUsers();
   }, []);
-  const closeModal = () => {
-   
-    setIsModalOpen(false);
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/users/getall');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast.error('Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const closeModal = () => {
+    resetFormData();
+    setIsModalOpen(false);
+  };
+
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-  
     if (files && files.length > 0) {
       const file = files[0];
       setImagePreview(URL.createObjectURL(file));
-      // Set the file within modalFormData for form submission
       setModalFormData(prevState => ({ ...prevState, image: file }));
     } else {
-      // Update other form data without overwriting the entire state
       setModalFormData(prevState => ({ ...prevState, [name]: value }));
     }
+    setValidationMessages(prevMessages => ({ ...prevMessages, [name]: '' }));
   };
-  
 
-  
   const validateForm = () => {
     let messages = {};
     let isValid = true;
 
-    if (!modalFormData.uid.trim()) {
-      isValid = false;
-      messages.uid = 'UID is required';
-    }
-    // Add more validations as needed
     if (!modalFormData.name.trim()) {
       isValid = false;
       messages.name = 'Name is required';
-    }
-    if (!modalFormData.selling_price.trim() || isNaN(modalFormData.selling_price)) {
+    } else if (!/^[a-zA-Z\s]+$/.test(modalFormData.name)) {
       isValid = false;
-      messages.selling_price = 'Valid selling price is required';
+      messages.name = 'Name can contain only letters and spaces';
     }
-    if (!modalFormData.quantity.trim() || isNaN(modalFormData.quantity)) {
+
+    if (!modalFormData.email.trim()) {
       isValid = false;
-      messages.quantity = 'Valid quantity is required';
+      messages.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(modalFormData.email)) {
+      isValid = false;
+      messages.email = 'Please enter a valid email address';
     }
-    if (!modalFormData.status) {
+
+    if (btnSave && !modalFormData.password.trim()) {
       isValid = false;
-      messages.status = 'Status is required';
+      messages.password = 'Password is required';
+    } else if (modalFormData.password && modalFormData.password.length < 6) {
+      isValid = false;
+      messages.password = 'Password must be at least 6 characters long';
     }
-    if (!modalFormData.Category) {
+
+    if (!modalFormData.usertype.trim()) {
       isValid = false;
-      messages.Category = 'Category is required';
+      messages.usertype = 'User type is required';
+    }
+
+    if (!modalFormData.gender.trim()) {
+      isValid = false;
+      messages.gender = 'Gender is required';
+    }
+
+    if (!modalFormData.image) {
+      isValid = false;
+      messages.image = 'Image is required';
     }
 
     setValidationMessages(messages);
     return isValid;
   };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!validateForm()) return;
+
     const formData = new FormData();
-    Object.keys(modalFormData).forEach((key) => {
-      formData.append(key, modalFormData[key]);
-    });
-    if (!validateForm()) return; // Stop form submission if validation fails
-    try {
-      await axios.post('http://localhost:5000/UserManagement', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      alert('UserManagement added successfully');
-      setIsModalOpen(false);
-      setModalFormData({ uid: '', name: '', selling_price: '', quantity: '', status: '', image: null }); // Reset form
-    } catch (error) {
-      console.error('Failed to submit UserManagement:', error);
+    formData.append('name', modalFormData.name);
+    formData.append('email', modalFormData.email);
+    formData.append('usertype', modalFormData.usertype);
+    formData.append('gender', modalFormData.gender);
+    formData.append('image', modalFormData.image);
+
+    if (modalFormData.password.trim()) {
+      formData.append('password', modalFormData.password);
     }
+
+    setFormLoading(true); // Set loading state for form submission
+
+    try {
+      if (btnSave) {
+        await axios.post('http://localhost:5000/api/users/signup', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        toast.success('User added successfully');
+      } else {
+        const updateUrl = `http://localhost:5000/api/users/${selectedUser._id}`;
+        await axios.put(updateUrl, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        toast.success('User updated successfully');
+      }
+      fetchUsers();
+      resetFormData();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to submit user:', error);
+      if (error.response && error.response.data && error.response.data.message === 'Email already exists') {
+        toast.error('Email already exists. Please use a different email.');
+      } else {
+        toast.error('Failed to submit user');
+      }
+    } finally {
+      setFormLoading(false); // Reset loading state after form submission
+    }
+  };
+
+  const handleEdit = async (index) => {
+    const selectedUser = users[index];
+    setSelectedUser(selectedUser);
+
+    try {
+      const response = await axios.get(`http://localhost:5000/api/users/${selectedUser._id}`);
+      const userData = response.data;
+      setModalFormData({
+        name: userData.name,
+        email: userData.email,
+        password: '', // Leave password empty
+        usertype: userData.usertype,
+        gender: userData.gender,
+        image: userData.image,
+      });
+      setImagePreview(`http://localhost:5000/${userData.image}`);
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      toast.error('Failed to fetch user data');
+    }
+
+    setBtnUpdate(true);
+    setBtnSave(false);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = (index) => {
+    confirmAlert({
+      title: 'Confirm to delete',
+      message: 'Are you sure to delete this user?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => handleDelete(index)
+        },
+        {
+          label: 'No',
+        }
+      ]
+    });
+  };
+
+  const handleDelete = async (index) => {
+    const selectedUser = users[index];
+    try {
+      const deleteUrl = `http://localhost:5000/api/users/${selectedUser._id}`;
+      await axios.delete(deleteUrl);
+      toast.success('User deleted successfully');
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
+
+  const resetFormData = () => {
+    setModalFormData({
+      name: '',
+      email: '',
+      password: '',
+      usertype: '',
+      gender: '',
+      image: null,
+    });
+    setValidationMessages({});
+    setImagePreview(null);
+    setBtnUpdate(false);
+    setBtnSave(true);
+    setShowPassword(false); // Reset show/hide password state
+  };
+
+  const handleAddNewUser = () => {
+    setIsModalOpen(true);
   };
 
   const customModalStyles = {
@@ -142,69 +269,122 @@ function UserManagementTable() {
       label: 'Image',
       options: {
         customBodyRender: (value) => {
-          return <img src={value} alt="UserManagement" style={{ height: '50px' }} />;
+          return <img src={`http://localhost:5000/${value}`} alt="User" style={{ height: '50px' }} />;
         },
       },
     },
-     'name', 'email', 'password', 'user type'
+    { name: 'name', label: 'Name' },
+    { name: 'email', label: 'Email' },
+    { name: 'usertype', label: 'User Type' },
+    { name: 'gender', label: 'Gender' },
+    {
+      name: 'actions',
+      label: 'Actions',
+      options: {
+        customBodyRender: (value, tableMeta) => {
+          const rowIndex = tableMeta.rowIndex;
+          return (
+            <div>
+              <button 
+                onClick={() => handleEdit(rowIndex)} 
+                style={{ backgroundColor: 'green', color: 'white', marginRight: '5px', padding: '5px', borderRadius: '5px' }}
+              >
+                <MdEdit />
+              </button>
+              <button 
+                onClick={() => confirmDelete(rowIndex)} 
+                style={{ backgroundColor: 'red', color: 'white', padding: '5px', borderRadius: '5px' }}
+              >
+                <MdDelete />
+              </button>
+            </div>
+          );
+        }
+      }
+    }
   ];
 
-  const data = UserManagement.map((UserManagement) => [
-    UserManagement.image, UserManagement.uid, UserManagement.name, UserManagement.selling_price, UserManagement.quantity, UserManagement.status
+  const data = users.map((user) => [
+    user.image, user.name, user.email, user.usertype, user.gender
   ]);
 
   const options = {
-    filterType: 'checkbox',
+    responsive: "vertical",
+    tableBodyHeight: "400px",
+    selectableRows: 'none',
   };
 
   return (
     <div>
+      <ToastContainer />
       <button
-        onClick={() => setIsModalOpen(true)}
-        className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 "
+        onClick={handleAddNewUser}
+        className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700"
       >
         <MdPostAdd /> Add New User
       </button>
       <CacheProvider value={MuiCache}>
         <ThemeProvider theme={createTheme()}>
-          <MUIDataTable title={'Users List'} data={data} columns={columns} options={options} />
+          {loading ? (
+            <div className="flex justify-center">
+              <CircularProgress />
+            </div>
+          ) : (
+            <MUIDataTable title={'Users List'} data={data} columns={columns} options={options} />
+          )}
         </ThemeProvider>
       </CacheProvider>
 
-      <Modal isOpen={isModalOpen} onRequestClose={() => setIsModalOpen(false)} style={customModalStyles}>
-        <h2 style={{ color: '#333', marginBottom: '20px' }}>Add New Usert</h2>
-        {/* Preview image */}
+      <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
+        <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New User' : 'Update User'}</h2>
         {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="Preview"
-              className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
-            />
-            
-          )}
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
+          />
+        )}
         <form onSubmit={handleFormSubmit} className='grid grid-cols-2 gap-3'>
-        
-          {/* <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          {validationMessages.uid && <p className="text-red-500">{validationMessages.uid}</p>} */}
-          <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          <input type="email" name="email" placeholder="email" onChange={handleInputChange} value={modalFormData.price} required className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          <input type="password" name="password" placeholder="enter user pasword" onChange={handleInputChange} value={modalFormData.selling_price} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
+          <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+          {validationMessages.name && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.name}</p>}
+          <input type="email" name="email" placeholder="Email" onChange={handleInputChange} value={modalFormData.email} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.email ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+          {validationMessages.email && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.email}</p>}
+          <div className="relative col-span-2">
+            <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" onChange={handleInputChange} value={modalFormData.password} className={`p-3 my-2 rounded-md border-solid ${validationMessages.password ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full pr-10`} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
+              {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+            </button>
+            {validationMessages.password && <p className="text-red-500 text-xs mt-1">{validationMessages.password}</p>}
+          </div>
+          <select name="usertype" onChange={handleInputChange} value={modalFormData.usertype} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.usertype ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+            <option value="">Select User Type</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          {validationMessages.usertype && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.usertype}</p>}
+          <select name="gender" onChange={handleInputChange} value={modalFormData.gender} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.gender ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+          {validationMessages.gender && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.gender}</p>}
+          <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+          {validationMessages.image && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.image}</p>}
           
-          
-          <input type="text" name="usertype" placeholder="user type" onChange={handleInputChange} value={modalFormData.quantity} required className='p-3 my-2 rounded-md border-solid border-blue-300  border-[1px] w-full' />
-          <input type="file" name="image" onChange={handleInputChange} className='p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full' />
-          
-          <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
-          <button  onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
+          {formLoading ? (
+            <div className="flex justify-center col-span-2">
+              <CircularProgress />
+            </div>
+          ) : (
+            <>
+              <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
+              <button onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
+            </>
+          )}
         </form>
-        <h1 className='p-3 my-2 rounded-md border-solid border-blue-300 w-full'></h1>
       </Modal>
     </div>
   );
 }
-
-
-
-
 
 export default UserManagementTable;
