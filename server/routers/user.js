@@ -20,4 +20,6 @@ router.post('/users/verify-code-update-password', userController.verifyCodeAndUp
 // Ensure this route is correctly set
 router.get('/users/validate-token', userController.validateToken);
 
+
+
 module.exports = router;

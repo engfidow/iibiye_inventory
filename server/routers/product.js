@@ -16,4 +16,7 @@ router.delete('/products/:id', productController.deleteProduct);
 //get products of UIds 
 router.get('/products/info/uids', productController.getUidsProduct);
 
+// Ensure this route is correctly set
+router.get('/products/getwithstatus', userController.getProductsWithstatus);
+
 module.exports = router;

@@ -108,6 +108,16 @@ const getUidsProduct = async (req, res) => {
 };
 
 
+// Get all products
+const getProductsWithstatus = async (req, res) => {
+  try {
+    const products = await Product.find({ status: 'active' }).populate('category');
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   upload,
   createProduct,
@@ -115,5 +125,8 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
-  getUidsProduct
+  getUidsProduct,
+  getProductsWithstatus
 };
+
+
