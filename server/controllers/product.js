@@ -90,11 +90,11 @@ const getUidsProduct = async (req, res) => {
     // Get UIDs from query parameters
     const { uids } = req.query;
 
-    // Convert comma-separated UIDs string to array
-   
+    // Ensure uids is an array
+    const uidArray = Array.isArray(uids) ? uids : uids.split(',');
 
     // Fetch products by UIDs
-    const products = await Product.find({ uid: { $in: uids } });
+    const products = await Product.find({ uid: { $in: uidArray } });
 
     // If products found, return them
     if (products.length > 0) {
@@ -106,6 +106,7 @@ const getUidsProduct = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 // Get all products
