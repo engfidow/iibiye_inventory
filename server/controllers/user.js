@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
+const mongoose = require('mongoose'); // Add this line
+
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 const verificationCodes = {}; // In-memory store for verification codes
@@ -330,11 +332,11 @@ exports.verifyCodeAndUpdatePassword = async (req, res) => {
 
 exports.validateToken = async (req, res) => {
     const token = req.headers.authorization.split(' ')[1];
-    console.log("Token received:", token); // Log the received token
+    // console.log("Token received:", token); // Log the received token
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded token:", decoded); // Log the decoded token
-      if (decoded) {
+    //   console.log("Decoded token:", decoded); // Log the decoded token
+      if (decoded && mongoose.Types.ObjectId.isValid(decoded.id)) {
         // Find the user by decoded ID
         const user = await User.findById(decoded.id);
         if (!user) {
@@ -342,11 +344,9 @@ exports.validateToken = async (req, res) => {
         }
         return res.status(200).send({ valid: true, user });
       }
-      return res.status(401).send({ valid: false });
+      return res.status(401).send({ valid: false, message: 'Invalid token' });
     } catch (error) {
       console.error("Token validation error:", error);
       return res.status(500).send({ valid: false, message: 'Internal server error' });
     }
   };
-  
-  

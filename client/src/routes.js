@@ -84,13 +84,7 @@ const routes = [
     path: "transaction",
     component: <Transaction />,
   },
-  {
-    name: "Reports",
-    layout: "/admin",
-    icon: <MdBarChart className="h-6 w-6" />,
-    path: "reports",
-    component: <Reports />,
-  },
+ 
   {
     name: "Users Management",
     layout: "/admin",

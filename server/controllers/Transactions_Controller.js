@@ -1,4 +1,5 @@
 const Transaction = require("../models/Transactions");
+const Product = require('../models/Products');
 const { payByWaafiPay } = require("../paymentEvc");
 
 // Create Transaction
@@ -12,11 +13,17 @@ exports.createTransaction = async (req, res) => {
         apiUserId: process.env.apiUserId,
         apiKey: process.env.apiKey,
       });
-     
+
       if (waafiResponse.status) {
         console.log(waafiResponse.status);
         const transaction = new Transaction(req.body);
         await transaction.save();
+
+        // Update product status to inactive
+        for (const product of req.body.productsList) {
+          await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+        }
+
         res.status(201).json(transaction);
       } else {
         // Handling payment failure
@@ -28,6 +35,12 @@ exports.createTransaction = async (req, res) => {
     } else {
       const transaction = new Transaction(req.body);
       await transaction.save();
+
+      // Update product status to inactive
+      for (const product of req.body.productsList) {
+        await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+      }
+
       res.status(201).json(transaction);
     }
   } catch (error) {

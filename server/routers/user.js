@@ -18,7 +18,7 @@ router.post('/users/send-verification-code', userController.sendVerificationCode
 router.post('/users/verify-code-update-password', userController.verifyCodeAndUpdatePassword);
 
 // Ensure this route is correctly set
-router.get('/users/validate-token', userController.validateToken);
+router.get('/users/auth/validate-token', userController.validateToken);
 
 
 

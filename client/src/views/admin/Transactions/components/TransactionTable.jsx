@@ -1,366 +1,220 @@
-import {React, useEffect, useState }  from "react"
-import MUIDatatable from "mui-datatables"
-import { ThemeProvider } from "@mui/material/styles"
-import { createTheme } from "@mui/material/styles"
-import { CacheProvider } from "@emotion/react"
-import createCache    from "@emotion/cache"
-import axios from 'axios'
-import { MdPostAdd } from "react-icons/md"
+import { React, useEffect, useState } from "react";
+import MUIDatatable from "mui-datatables";
+import { ThemeProvider } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+import axios from 'axios';
 import Modal from 'react-modal';
+import CircularProgress from '@mui/material/CircularProgress';
+import { TextField } from '@mui/material';
 
 function TransactionTable() {
-    const formattedDate = new Date().toLocaleDateString();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-const MuiCache = createCache({
-  key:"mui-datatables",
-  prepend:true
-})
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [Transaction, setTransaction] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const MuiCache = createCache({
+    key: "mui-datatables",
+    prepend: true
+  });
 
-const[Transaction ,setTransaction] = useState([]);
-
-
-
-const fetchData = async () => {
+  const fetchData = async () => {
     try {
-      
-      const xogta = await axios.get('http://localhost:5000/api/Transaction/get');
-      const reslty = xogta.data;
-      setTransaction(reslty);
+      setIsLoading(true);
+      const response = await axios.get('http://localhost:5000/api/transactions');
+      console.log('Fetched Transactions:', response.data);
+      setTransaction(response.data);
     } catch (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
   useEffect(() => {
-    // Call fetchData only when the component mounts
     fetchData();
   }, []);
-//   
 
-const[responsive ,setresponsive] = useState("vertical");
-const[tableBodyHeight , settableBodyHeight] = useState("400px");
-const[tableBodyMaxHeight , settableBodyMaxHeight] = useState("");
-const[addBtn,setBtn] = useState(true);
-const[searchBtn , setsearch] = useState(true);
-const[downloadBtn , setdownload] = useState(true);
-const[printBtn , setprint] = useState(true);
-const[veiColumnsBtn , setveiwColumns] = useState(true);
-const[filterBtn, setfilter]= useState(true);
-
-const [selectedTransaction, setSelectedTransaction] = useState(null);
-
-const handleRowClick = (rowData, rowMeta) => {
-  
-  const selectedRowIndex = rowMeta.dataIndex;
-  const selectedExpense = Transaction[selectedRowIndex];
-  setSelectedTransaction(selectedExpense);
-  setBtnUpdate(true);
-  setBtnSave(false);
-  setIsModalOpen(true);
-};
-
-const columns =[
-  
-  "Payment Method",
-  "Customer Email",
-  "Total Amount",
-  "Date",
-  
-
-];
-
-const options = {
-  onRowClick: handleRowClick,
-  add: addBtn,
-  search:searchBtn,
-  download : downloadBtn,
-  print : printBtn,
-  veiColumns :  veiColumnsBtn,
-  filter : filterBtn,
-  responsive,
-  tableBodyHeight,
-  tableBodyMaxHeight,
-//  onTableChange:(action ,state)=>{
-//   console.log(action);
-//   console.log(state);
-//  }
-}
-
-
-
-// ];
-const [formSubmitted, setFormSubmitted] = useState(false);
-
-    // State for form data
-    const [formData, setFormData] = useState({
-        id: "",
-        amount: "",
-        description: "",
-        date: "",
-        
-    });
-    const resetFormData = () => {
-      setFormData({
-        id: "",
-        amount: "",
-        description: "",
-        date: "",
-      });
-    };
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevData) => ({ ...prevData, [name]: value }));
-    };
-
-    useEffect(() => {
-      if (selectedTransaction) {
-        setFormData({
-          id: selectedTransaction.TransactionID,
-          amount: selectedTransaction.Amount,
-          description: selectedTransaction.Description,
-          date: selectedTransaction.date,
-        });
-      }
-    }, [selectedTransaction]);
-    const handleUpdate = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-    
-      if (formData.amount === "" || formData.description === "" || formattedDate === "") {
-        // Handle empty fields
-        return;
-      }
-    
-      try {
-        // Replace ':id' in the URL with the actual ID of the expense
-        const updateUrl = `http://localhost:5000/api/Transaction/${formData.id}`;
-    
-        // Make a PUT request to update the expense by ID
-        const response = await axios.put(updateUrl, {
-          amount: formData.amount,
-          description: formData.description,
-          date: formData.date,
-        });
-    
-        alert("Updated This Transaction:", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful update, redirect user, etc.
-      } catch (error) {
-        console.error("Error updating transaction:", error.response.data);
-        // Handle update error (e.g., display error message)
-      }
-    };
-    // delete expence by id 
-    const handleDelete = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-    
-      if (formData.id === "") {
-        // Handle empty fields
-        return;
-      }
-    
-      try {
-        // Replace ':id' in the URL with the actual ID of the expense
-        const deleteUrl = `http://localhost:5000/api/Transaction/delete${formData.id}`;
-    
-        // Make a DELETE request to delete the expense by ID
-        const response = await axios.delete(deleteUrl);
-    
-        alert("Deleted This Transaction:", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful deletion, redirect user, etc.
-      } catch (error) {
-        console.error("Error deleting transaction:", error.response.data);
-        // Handle deletion error (e.g., display error message)
-      }
-    };
-    
-    
-const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setFormSubmitted(true);
-   
-    if (formData.amount === "" || formData.description === "" || formattedDate === "") {
-      alert("Please fill in all the fields before submitting!");
-      return;
-    }
-
-    
-   
-    try {
-     
-        // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('http://localhost:5000/api/Transaction', {
-            amount: formData.amount,
-            description: formData.description,
-            date: formData.date
-           
-        });
-
-        alert("Registered This Transaction :", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful registration, redirect user, etc.
-    } catch (error) {
-        console.error("Error registering user:", error.response.data);
-        // Handle registration error (e.g., display error message)
-    }
-};
-const handleAddNewTransaction = () => {
-   setBtnSave(true);
-   setBtnUpdate(false);
-   setIsModalOpen(true);
+  const handleRowClick = (rowData, rowMeta) => {
+    const selectedRowIndex = rowMeta.dataIndex;
+    const selectedTransaction = Transaction[selectedRowIndex];
+    setSelectedTransaction(selectedTransaction);
+    setIsModalOpen(true);
   };
 
-  const closeModal = () => {
-    resetFormData();
-    setIsModalOpen(false);
-
+  const handleDateChange = (field, value) => {
+    if (field === 'start') {
+      setStartDate(value);
+    } else if (field === 'end') {
+      setEndDate(value);
+    }
   };
-  const [btnupdate, setBtnUpdate] = useState(false);
-  const [btnsave, setBtnSave] = useState(true);
+
+  const filteredTransactions = Transaction.filter(transaction => {
+    const transactionDate = new Date(transaction.createdAt);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    return (!start || transactionDate >= start) && (!end || transactionDate <= end);
+  });
+
+  const formatCurrency = (value) => {
+    return `$${value.toFixed(2)}`;
+  };
+
+  const calculateProfit = (productsList) => {
+    return productsList.reduce((acc, product) => acc + (product.productUid.sellingPrice - product.productUid.price), 0);
+  };
+
+  const getProfitColor = (profit) => {
+    return profit >= 0 ? 'green' : 'red';
+  };
+
+  const columns = [
+    { name: "No", options: { customBodyRenderLite: (dataIndex) => dataIndex + 1 } },
+    "Transaction ID",
+    "User Name",
+    {
+      name: "Total Price",
+      options: {
+        customBodyRender: (value) => formatCurrency(value)
+      }
+    },
+    {
+      name: "Profit",
+      options: {
+        customBodyRender: (value) => (
+          <span style={{ color: getProfitColor(value) }}>{formatCurrency(value)}</span>
+        )
+      }
+    },
+    "Date"
+  ];
+
+  const options = {
+    onRowClick: handleRowClick,
+  };
+
   return (
     <div className='e-container'>
-         {/* Modal Component */}
-      
-      <Modal
-  className="bg-white  rounded  mx-auto p-4 fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-  isOpen={isModalOpen}
-  onRequestClose={closeModal}
-  contentLabel="Add New Transaction Modal"
-  style={{ overlay: { zIndex: 51 }, content: { width: '400px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' } }}
->    <form onSubmit={handleFormSubmit}>
-      <div className="mb-4">
-        <h2 className="text-lg font-bold mb-4">Add New Transaction</h2>
-        {/* <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Id
-        </label>
-        <input
-          type="text"
-          id="field1"
-          name="id"
-          value={formData.id}
-          onChange={handleInputChange}
-          
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        /> */}
-        
-        <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Amount
-        </label>
-        <input
-          pattern="[0-9]*"
-          type="text"
-          id="field1"
-          name="amount"
-          value={formData.amount}
-          onChange={handleInputChange}
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && isNaN(formData.amount) && (
-              <label className="text-red-700 text-xs">Please enter a valid number.</label>
-            )}
-      </div>
-      <div className="mb-4">
-        <label htmlFor="field2" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Description
-        </label>
-        <input
-          type="text"
-          name="description"
-          id="field2"
-          value={formData.description}
-          onChange={handleInputChange}
-          pattern="[a-zA-Z]*"
-          title="Please enter characters (a-z) only."
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && !/^[a-zA-Z]*$/.test(formData.description) && (
-              <label className="text-red-700 text-xs">Please enter valid characters (a-z and A-Z) only.</label>
-            )}
-      </div>
-     
-      <div className="mb-4">
-        <label htmlFor="field3" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Date
-        </label>
-        <input
-          type="date"
-          name="date"
-          id="field3"
-          value={formData.date}
-          
-          onChange={handleInputChange}
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-black-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && !formData.date && (
-              <label className="text-red-700 text-xs">Please choose a date.</label>
-            )}
-      </div>
-      
-      <div className="flex justify-end">
-      {btnupdate && <button
-          
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={handleUpdate}
-        >
-          Update
-        </button>}
-        {btnupdate && <button
-          
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={handleDelete}
-        >
-          Delete
-        </button>}
-      
-        {btnsave && <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          // onClick={handleSave}
-        >
-          Save
-        </button>}
-        <button
-          
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
-          onClick={closeModal}
-        >
-          Close
-        </button>
-        
-      </div>
-      </form>
-    </Modal>
-      <div>
-       
-        <CacheProvider value={MuiCache}>
-          <ThemeProvider theme={createTheme()}>
-            {/* <button
-              type="button"
-              className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 "
-              onClick={handleAddNewTransaction}
-            >
-              <MdPostAdd className="text-lg" /> Add New Transaction
-            </button> */}
-            <MUIDatatable
-              title={"Transaction List"}
-              data={Transaction.map((Transaction) => [Transaction.TransactionID, Transaction.Amount, Transaction.Description, Transaction.DateAdded])}
-              columns={columns}
-              options={options}
-              
-            />
-          </ThemeProvider>
-        </CacheProvider>
-         
+      <div className="flex justify-between mb-4">
+        <div>
+          <label className="mr-2">Start Date:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => handleDateChange('start', e.target.value)}
+            className="border p-2 rounded"
+          />
         </div>
+        <div>
+          <label className="mr-2">End Date:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => handleDateChange('end', e.target.value)}
+            className="border p-2 rounded"
+          />
         </div>
-  )
+      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+          <Modal
+            className="bg-white bg-cover bg-center rounded-lg mx-auto p-6 fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-lg overflow-auto"
+            isOpen={isModalOpen}
+            onRequestClose={() => setIsModalOpen(false)}
+            contentLabel="Transaction Details Modal"
+            style={{ 
+              overlay: {
+                backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                zIndex: 999,
+              },
+              content: { 
+                width: '80%', 
+                height: '80%', 
+                maxHeight: '90%', 
+                maxWidth: '90%', 
+                backgroundImage: `url('/mnt/data/image.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                color: 'white',
+                padding: '20px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+              } 
+            }}
+          >
+            {selectedTransaction && (
+              <div className="overflow-auto max-h-full">
+                <h2 className="text-2xl font-bold mb-4">Transaction Details</h2>
+                <div className="mb-4 text-[#000]">
+                  <strong>Transaction ID:</strong> {selectedTransaction._id}
+                </div>
+                <div className="mb-4 text-[#000]">
+                  <strong>User Name:</strong> {selectedTransaction.userCustomerId.name}
+                </div>
+                <div className="mb-4 text-[#000]">
+                  <strong>Payment Phone:</strong> {selectedTransaction.paymentPhone}
+                </div>
+                <div className="mb-4 text-[#000]">
+                  <strong>Total Price:</strong> {formatCurrency(selectedTransaction.totalPrice)}
+                </div>
+                <div className="mb-4 text-[#000]" style={{ color: getProfitColor(calculateProfit(selectedTransaction.productsList)) }}>
+                  <strong>Profit:</strong> {formatCurrency(calculateProfit(selectedTransaction.productsList))}
+                </div>
+                <div className="mb-4 text-[#000]">
+                  <strong>Date:</strong> {new Date(selectedTransaction.createdAt).toLocaleDateString()}
+                </div>
+                <div className="mb-4 text-[#000]">
+                  <h3 className="text-xl font-semibold">Products:</h3>
+                  {selectedTransaction.productsList.map((product, index) => (
+                    <div key={index} className="flex mb-4 items-center bg-white pl-4 rounded-md shadow-inner w-96">
+                      <img src={`http://localhost:5000/${product.productUid.image}`} alt={product.productUid.name} className="w-16 h-16 mr-4 rounded-lg"/>
+                      <div>
+                        <div><strong>Name:</strong> {product.productUid.name}</div>
+                        <div><strong>Price:</strong> {formatCurrency(product.productUid.sellingPrice)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="bg-blue-500 mb-10 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </Modal>
+
+          <CacheProvider value={MuiCache}>
+            <ThemeProvider theme={createTheme()}>
+              <MUIDatatable
+                title={"Transaction List"}
+                data={filteredTransactions.map((transaction, index) => [
+                  index + 1,
+                  transaction._id,
+                  transaction.userCustomerId.name,
+                  transaction.totalPrice,
+                  calculateProfit(transaction.productsList),
+                  new Date(transaction.createdAt).toLocaleDateString(),
+                ])}
+                columns={columns}
+                options={options}
+              />
+            </ThemeProvider>
+          </CacheProvider>
+        </>
+      )}
+    </div>
+  );
 }
 
-export default TransactionTable
+export default TransactionTable;

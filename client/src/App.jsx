@@ -15,13 +15,14 @@ function App() {
       const userData = Cookies.get('user');
       const token = Cookies.get('token');
       if (userData && token) {
+        console.log("Token:", token); // Log the token
         try {
-          const response = await axios.get('http://localhost:5000/api/users/validate-token', {
+          const response = await axios.get('http://localhost:5000/api/users/auth/validate-token', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-          if (response.status === 200) {
+          if (response.status === 200 && response.data.valid) {
             setUser(JSON.parse(userData));
           } else {
             Cookies.remove('user');
@@ -35,10 +36,9 @@ function App() {
       }
       setLoading(false);
     };
-  
+
     validateUserSession();
   }, []);
-  
 
   const handleLogout = () => {
     Cookies.remove('user');
