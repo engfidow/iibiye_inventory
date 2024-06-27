@@ -15,4 +15,7 @@ router.get('/transactions/details', transactionController.getTransactionsWithPro
 // Route to get transactions by user ID
 router.get('/transactions/user/:userId', transactionController.getTransactionByUserId);
 
+
+// Get profit for the current month
+router.get('/transactions/profit/month', transactionController.getMonthlyProfit);
 module.exports = router;

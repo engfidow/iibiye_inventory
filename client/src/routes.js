@@ -22,7 +22,7 @@ import {
 import { IoSwapVertical } from "react-icons/io5";
 import { BiCategory } from "react-icons/bi";
 import Dashboard from "views/admin/default";
-
+import UserDashboard from "views/user/default";
 
 import Profile from "views/admin/profile";
 import Login from "components/loging/Login";
@@ -45,7 +45,7 @@ const routes = [
     layout: "/user",
     path: "default",
     icon: <MdHome className="h-6 w-6" />,
-    component: <Dashboard />,
+    component: <UserDashboard />,
   },
   {
     name: "Products",

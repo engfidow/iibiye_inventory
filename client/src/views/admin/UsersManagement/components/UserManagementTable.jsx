@@ -27,6 +27,7 @@ function UserManagementTable() {
     password: '',
     usertype: '',
     gender: '',
+    status: '', // Initialize status
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -126,6 +127,7 @@ function UserManagementTable() {
     formData.append('email', modalFormData.email);
     formData.append('usertype', modalFormData.usertype);
     formData.append('gender', modalFormData.gender);
+    formData.append('status', modalFormData.status);
     formData.append('image', modalFormData.image);
 
     if (modalFormData.password.trim()) {
@@ -179,6 +181,7 @@ function UserManagementTable() {
         password: '', // Leave password empty
         usertype: userData.usertype,
         gender: userData.gender,
+        status: userData.status,
         image: userData.image,
       });
       setImagePreview(`http://localhost:5000/${userData.image}`);
@@ -228,6 +231,7 @@ function UserManagementTable() {
       password: '',
       usertype: '',
       gender: '',
+      status: '',
       image: null,
     });
     setValidationMessages({});
@@ -344,7 +348,8 @@ function UserManagementTable() {
             className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
           />
         )}
-        <form onSubmit={handleFormSubmit} className='grid grid-cols-2 gap-3'>
+        <form onSubmit={handleFormSubmit} className=''>
+          <div className="grid grid-cols-2 gap-3">
           <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
           {validationMessages.name && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.name}</p>}
           <input type="email" name="email" placeholder="Email" onChange={handleInputChange} value={modalFormData.email} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.email ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
@@ -368,9 +373,14 @@ function UserManagementTable() {
             <option value="female">Female</option>
           </select>
           {validationMessages.gender && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.gender}</p>}
+          <select name="status" onChange={handleInputChange} value={modalFormData.status} className={`p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full`}>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
           {validationMessages.image && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.image}</p>}
-          
+          </div>
+          <div className="grid grid-cols-2 gap-3">
           {formLoading ? (
             <div className="flex justify-center col-span-2">
               <CircularProgress />
@@ -381,6 +391,10 @@ function UserManagementTable() {
               <button onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
             </>
           )}
+          </div>
+          
+          
+          
         </form>
       </Modal>
     </div>

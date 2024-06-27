@@ -17,7 +17,7 @@ const Navbar = (props) => {
     window.location.href = '/login';
   };
 
-  const userImage = user.image ? `http://localhost:5000/${user.image}` : 'path_to_default_avatar_image';
+  // const userImage = user.image ? `http://localhost:5000/${user.image}` : '';
 
   return (
     <nav className="sticky top-4 z-30 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -91,8 +91,8 @@ const Navbar = (props) => {
           button={
             <img
               className="h-10 w-10 rounded-full"
-              src={userImage}
-              alt={user.name}
+              src={`http://localhost:5000/${user.image}`}
+              alt="userimage"
             />
           }
           children={

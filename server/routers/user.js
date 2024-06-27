@@ -15,11 +15,12 @@ router.get('/users/email/:email', userController.getUserByEmail);
 
 router.post('/users/change-password', userController.changePassword);
 router.post('/users/send-verification-code', userController.sendVerificationCode);
-router.post('/users/verify-code-update-password', userController.verifyCodeAndUpdatePassword);
+router.post('/users/update-password', userController.updatePassword);
 
 // Ensure this route is correctly set
 router.get('/users/auth/validate-token', userController.validateToken);
 
-
+// Ensure this route is correctly set
+router.get('/users/getAdmin/Contact', userController.getAdminContact);
 
 module.exports = router;

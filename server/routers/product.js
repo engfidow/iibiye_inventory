@@ -19,4 +19,11 @@ router.get('/products/info/uids', productController.getUidsProduct);
 // Ensure this route is correctly set
 router.get('/products/data/getwithstatus', productController.getProductsWithstatus);
 
+// Get total number of active products
+router.get('/products/data/totalactive', productController.getTotalActiveProducts);
+
+// Get last 4 products
+router.get('/products/fourproducts/last', productController.getLastProducts);
+
+
 module.exports = router;

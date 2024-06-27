@@ -249,15 +249,14 @@ exports.sendVerificationCode = async (req, res) => {
     try {
         // Generate a 6-digit numeric verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const verificationCodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
         // Save the verification code and its expiration time in memory
         verificationCodes[email] = {
             code: verificationCode,
-            expires: verificationCodeExpires,
+            expires: Date.now() + 10 * 60 * 1000, // 10 minutes
         };
 
-        console.log(`Verification code for ${email}: ${verificationCode}, expires at: ${new Date(verificationCodeExpires)}`);
+        console.log(`Verification code for ${email}: ${verificationCode}`);
 
         // Send the verification code to the user's email
         const mailOptions = {
@@ -272,7 +271,7 @@ exports.sendVerificationCode = async (req, res) => {
                 console.error('Error sending email:', error);
                 return res.status(500).send({ message: 'Error sending email' });
             }
-            res.status(200).send({ message: 'Verification code sent' });
+            res.status(200).send({ message: 'Verification code sent', verificationCode }); // Return the code for frontend state management
         });
     } catch (error) {
         console.error('An error occurred:', error);
@@ -280,32 +279,9 @@ exports.sendVerificationCode = async (req, res) => {
     }
 };
 
-
-
-
-
-exports.verifyCodeAndUpdatePassword = async (req, res) => {
-    const { email, verificationCode, newPassword } = req.body;
+exports.updatePassword = async (req, res) => {
+    const { email, newPassword } = req.body;
     try {
-        const storedCodeDetails = verificationCodes[email];
-
-        // Log the stored code details for debugging
-        console.log(`Stored details for ${email}:`, storedCodeDetails);
-
-        if (!storedCodeDetails) {
-            console.log('No stored code details found for email:', email);
-            return res.status(400).send({ message: 'Invalid or expired verification code' });
-        }
-
-        console.log(`User ${email} provided code: ${verificationCode}`);
-        console.log(`Stored code: ${storedCodeDetails.code}, expires at: ${new Date(storedCodeDetails.expires)}`);
-
-        // Check if the verification code is correct and not expired
-        if (storedCodeDetails.code !== verificationCode || storedCodeDetails.expires < Date.now()) {
-            console.log('Verification code mismatch or expired');
-            return res.status(400).send({ message: 'Invalid or expired verification code' });
-        }
-
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 12);
 
@@ -319,15 +295,14 @@ exports.verifyCodeAndUpdatePassword = async (req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        // Remove the verification code from memory
-        delete verificationCodes[email];
-
         res.status(200).send({ message: 'Password updated successfully' });
     } catch (error) {
         console.error('An error occurred:', error);
         res.status(500).send({ message: 'An error occurred' });
     }
 };
+  
+  
 
 
 exports.validateToken = async (req, res) => {
@@ -350,3 +325,17 @@ exports.validateToken = async (req, res) => {
       return res.status(500).send({ valid: false, message: 'Internal server error' });
     }
   };
+
+
+  exports.getAdminContact = async (req, res) => {
+    try {
+        // Fetching the admin user details
+        const adminUser = await User.find({ usertype: 'admin' }).select('name email image');
+        if (!adminUser) {
+            return res.status(404).send({ message: 'Admin user not found' });
+        }
+        res.status(200).send(adminUser);
+    } catch (error) {
+        res.status(500).send({ message: 'An error occurred' });
+    }
+};

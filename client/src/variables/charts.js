@@ -273,30 +273,27 @@ export const lineChartOptionsTotalSpent = {
   legend: {
     show: false,
   },
-
   theme: {
     mode: "light",
   },
   chart: {
     type: "line",
-
     toolbar: {
       show: false,
     },
   },
-
   dataLabels: {
     enabled: false,
   },
   stroke: {
     curve: "smooth",
   },
-
+  colors: ["#DC143C", "#EF6086"], // Change colors here
   tooltip: {
     style: {
       fontSize: "12px",
       fontFamily: undefined,
-      backgroundColor: "#000000"
+      backgroundColor: "#000000",
     },
     theme: 'dark',
     x: {
@@ -321,10 +318,8 @@ export const lineChartOptionsTotalSpent = {
       },
     },
     type: "text",
-    range: undefined,
-    categories: ["SEP", "OCT", "NOV", "DEC", "JAN", "FEB"],
+    categories: Array.from({ length: new Date().getDate() }, (_, i) => i + 1), // Dynamic days
   },
-
   yaxis: {
     show: false,
   },

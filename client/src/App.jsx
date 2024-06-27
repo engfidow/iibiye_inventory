@@ -5,6 +5,8 @@ import UserLayout from 'layouts/user';
 import Login from 'components/loging/Login';
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -15,7 +17,7 @@ function App() {
       const userData = Cookies.get('user');
       const token = Cookies.get('token');
       if (userData && token) {
-        console.log("Token:", token); // Log the token
+        // console.log("Token:", token); // Log the token
         try {
           const response = await axios.get('http://localhost:5000/api/users/auth/validate-token', {
             headers: {
@@ -47,7 +49,20 @@ function App() {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Add a loading indicator while checking the user session
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+        <Box sx={{ mt: 2 }}>Please wait while we validate your session...</Box>
+      </Box>
+    );
   }
 
   return (

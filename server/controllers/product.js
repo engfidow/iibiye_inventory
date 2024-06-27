@@ -1,5 +1,6 @@
 // controllers/productController.js
 
+const Transaction = require("../models/Transactions");
 const Product = require('../models/Products');
 const multer = require('multer');
 const path = require('path');
@@ -119,6 +120,51 @@ const getProductsWithstatus = async (req, res) => {
   }
 };
 
+// Get total number of active products
+const getTotalActiveProducts = async (req, res) => {
+  try {
+    const totalActiveProducts = await Product.countDocuments({ status: 'active' });
+    res.status(200).json({ total: totalActiveProducts });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Get last 4 products
+const getLastProducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 }).limit(4);
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+// Get profit for the current month
+const getMonthlyProfit = async (req, res) => {
+  try {
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+    });
+
+    let profit = 0;
+
+    transactions.forEach(transaction => {
+      transaction.productsList.forEach(product => {
+        profit += product.productUid.sellingPrice - product.productUid.price;
+      });
+    });
+
+    res.status(200).json({ profit });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 module.exports = {
   upload,
   createProduct,
@@ -127,7 +173,10 @@ module.exports = {
   updateProduct,
   deleteProduct,
   getUidsProduct,
-  getProductsWithstatus
+  getProductsWithstatus,
+  getTotalActiveProducts,
+  getLastProducts,
+  getMonthlyProfit
 };
 
 

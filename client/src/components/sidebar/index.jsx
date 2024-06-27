@@ -36,7 +36,7 @@ const Sidebar = ({ open, onClose, user, setUser }) => {
 
       <ul className="mb-auto pt-1">
         <SidebarLinks routes={routes} user={user} />
-        <div className="relative mb-3 mt-44 flex hover:cursor-pointer" onClick={handleLogout}>
+        <div className="relative mb-3 flex hover:cursor-pointer" onClick={handleLogout}>
           <li className="my-[10px] flex cursor-pointer items-center px-8 justify-center gap-3">
             <span className="font-medium text-gray-600">
               <MdLock className="h-6 w-6" />
