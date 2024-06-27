@@ -17,7 +17,7 @@ const Navbar = (props) => {
     window.location.href = '/login';
   };
 
-  // const userImage = user.image ? `http://localhost:5000/${user.image}` : '';
+  const userImage = user.image ? `https://retailflash.up.railway.app/${user.image}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg';
 
   return (
     <nav className="sticky top-4 z-30 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
@@ -91,7 +91,7 @@ const Navbar = (props) => {
           button={
             <img
               className="h-10 w-10 rounded-full"
-              src={`http://localhost:5000/${user.image}`}
+              src={userImage}
               alt="userimage"
             />
           }

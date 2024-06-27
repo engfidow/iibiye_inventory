@@ -13,7 +13,7 @@ function AdminContactModal({ open, onClose, admins }) {
                     {admins.map((admin, index) => (
                         <ListItem key={index}>
                             <ListItemAvatar>
-                                <Avatar src={`http://localhost:5000/${admin.image}`} alt={admin.name} />
+                                <Avatar src={`https://retailflash.up.railway.app/${admin.image}`} alt={admin.name} />
                             </ListItemAvatar>
                             <ListItemText primary={admin.name} secondary={admin.email} />
                         </ListItem>

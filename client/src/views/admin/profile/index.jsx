@@ -39,7 +39,7 @@ const ProfileOverview = () => {
             confirmPassword: '',
             gender: user.gender || '',
           });
-          setImagePreview(user.image ? `http://localhost:5000/${user.image}` : 'path/to/default/avatar.png');
+          setImagePreview(user.image ? `https://retailflash.up.railway.app/${user.image}` : 'path/to/default/avatar.png');
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -137,7 +137,7 @@ const ProfileOverview = () => {
       gender: user?.gender || '',
     });
     setValidationMessages({});
-    setImagePreview(user?.image ? `http://localhost:5000/${user.image}` : 'path/to/default/avatar.png');
+    setImagePreview(user?.image ? `https://retailflash.up.railway.app/${user.image}` : 'path/to/default/avatar.png');
     setImage(null);
   };
 

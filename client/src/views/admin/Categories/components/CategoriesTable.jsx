@@ -72,7 +72,7 @@ function CategoriesTable() {
       name: "icon", 
       label: "Icon", 
       options: { 
-        customBodyRender: (value) => <img src={`http://localhost:5000/${value}`} alt="icon" style={{ width: '50px' }} /> 
+        customBodyRender: (value) => <img src={`https://retailflash.up.railway.app/${value}`} alt="icon" style={{ width: '50px' }} /> 
       } 
     },
     { name: "name", label: "Category Name" },
@@ -303,7 +303,7 @@ function CategoriesTable() {
             {formData.icon && (
               <div className="mt-2">
                 <img
-                  src={typeof formData.icon === 'string' ? `http://localhost:5000/${formData.icon}` : URL.createObjectURL(formData.icon)}
+                  src={typeof formData.icon === 'string' ? `https://retailflash.up.railway.app/${formData.icon}` : URL.createObjectURL(formData.icon)}
                   alt="Icon preview"
                   className="w-20 h-20 object-cover"
                 />

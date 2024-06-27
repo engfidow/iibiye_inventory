@@ -184,7 +184,7 @@ function UserManagementTable() {
         status: userData.status,
         image: userData.image,
       });
-      setImagePreview(`http://localhost:5000/${userData.image}`);
+      setImagePreview(`https://retailflash.up.railway.app/${userData.image}`);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       toast.error('Failed to fetch user data');
@@ -273,7 +273,7 @@ function UserManagementTable() {
       label: 'Image',
       options: {
         customBodyRender: (value) => {
-          return <img src={`http://localhost:5000/${value}`} alt="User" style={{ height: '50px' }} />;
+          return <img src={value ? `https://retailflash.up.railway.app/${value}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'}  alt="User" style={{ height: '50px' }} />;
         },
       },
     },

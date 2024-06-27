@@ -544,7 +544,7 @@ function Login({ setUser }) {
                 <option value="" disabled>Select Gender</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
-                <option value="other">Other</option>
+               
               </select>
               {(formSubmitted && formData.gender === "") && <label className="text-red-700 text-xs">Please select your gender</label>}
               <Components.Button type="submit">
