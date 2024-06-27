@@ -409,7 +409,7 @@ function Login({ setUser }) {
                   </span>
                 </div>
                 {(formSubmitted && formLoginData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
-                <Components.Anchor href='#' onClick={() => setResetStep(1)}>Forgot your password?</Components.Anchor>
+                <Components.Anchor href='' onClick={() => setResetStep(1)}>Forgot your password?</Components.Anchor>
                 <Components.Button type="submit">
                   {loading ? <ClipLoader size={20} color={"#fff"} /> : 'Sign In'}
                 </Components.Button>
