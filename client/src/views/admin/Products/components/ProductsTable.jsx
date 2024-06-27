@@ -45,7 +45,7 @@ function ProductsTable() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/products');
+      const response = await axios.get('https://retailflash.up.railway.app/api/products');
       setProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -57,7 +57,7 @@ function ProductsTable() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get('https://retailflash.up.railway.app/api/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -139,14 +139,14 @@ function ProductsTable() {
 
     try {
       if (btnSave) {
-        await axios.post('http://localhost:5000/api/products', formData, {
+        await axios.post('https://retailflash.up.railway.app/api/products', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         toast.success('Product added successfully');
       } else {
-        const updateUrl = `http://localhost:5000/api/products/${selectedProduct._id}`;
+        const updateUrl = `https://retailflash.up.railway.app/api/products/${selectedProduct._id}`;
         await axios.put(updateUrl, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -202,7 +202,7 @@ function ProductsTable() {
   const handleDelete = async (index) => {
     const selectedProduct = products[index];
     try {
-      const deleteUrl = `http://localhost:5000/api/products/${selectedProduct._id}`;
+      const deleteUrl = `https://retailflash.up.railway.app/api/products/${selectedProduct._id}`;
       await axios.delete(deleteUrl);
       toast.success('Product deleted successfully');
       fetchProducts();

@@ -40,7 +40,7 @@ const UpdateProfile = ({ user, setUser }) => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/users/${user._id}`, data, {
+      const response = await axios.put(`https://retailflash.up.railway.app/api/users/${user._id}`, data, {
         headers: {
           Authorization: `Bearer ${Cookies.get('token')}`,
         },

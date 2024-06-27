@@ -23,7 +23,7 @@ const[income ,setIncome] = useState([]);
 const fetchData = async () => {
     try {
       
-      const xogta = await axios.get('http://localhost:5000/api/income/get');
+      const xogta = await axios.get('https://retailflash.up.railway.app/api/income/get');
       const reslty = xogta.data;
       setIncome(reslty);
     } catch (error) {
@@ -131,7 +131,7 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const updateUrl = `http://localhost:5000/api/income/${formData.id}`;
+        const updateUrl = `https://retailflash.up.railway.app/api/income/${formData.id}`;
     
         // Make a PUT request to update the expense by ID
         const response = await axios.put(updateUrl, {
@@ -162,7 +162,7 @@ const [formSubmitted, setFormSubmitted] = useState(false);
     
       try {
         // Replace ':id' in the URL with the actual ID of the expense
-        const deleteUrl = `http://localhost:5000/api/income/delete${formData.id}`;
+        const deleteUrl = `https://retailflash.up.railway.app/api/income/delete${formData.id}`;
     
         // Make a DELETE request to delete the expense by ID
         const response = await axios.delete(deleteUrl);
@@ -193,7 +193,7 @@ const handleFormSubmit = async (e) => {
     try {
      
         // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('http://localhost:5000/api/income', {
+        const response = await axios.post('https://retailflash.up.railway.app/api/income', {
             amount: formData.amount,
             description: formData.description,
             date: formData.date

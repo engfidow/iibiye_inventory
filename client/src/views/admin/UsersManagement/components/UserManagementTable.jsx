@@ -43,7 +43,7 @@ function UserManagementTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/users/getall');
+      const response = await axios.get('https://retailflash.up.railway.app/api/users/getall');
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -138,14 +138,14 @@ function UserManagementTable() {
 
     try {
       if (btnSave) {
-        await axios.post('http://localhost:5000/api/users/signup', formData, {
+        await axios.post('https://retailflash.up.railway.app/api/users/signup', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         toast.success('User added successfully');
       } else {
-        const updateUrl = `http://localhost:5000/api/users/${selectedUser._id}`;
+        const updateUrl = `https://retailflash.up.railway.app/api/users/${selectedUser._id}`;
         await axios.put(updateUrl, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -173,7 +173,7 @@ function UserManagementTable() {
     setSelectedUser(selectedUser);
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/users/${selectedUser._id}`);
+      const response = await axios.get(`https://retailflash.up.railway.app/api/users/${selectedUser._id}`);
       const userData = response.data;
       setModalFormData({
         name: userData.name,
@@ -214,7 +214,7 @@ function UserManagementTable() {
   const handleDelete = async (index) => {
     const selectedUser = users[index];
     try {
-      const deleteUrl = `http://localhost:5000/api/users/${selectedUser._id}`;
+      const deleteUrl = `https://retailflash.up.railway.app/api/users/${selectedUser._id}`;
       await axios.delete(deleteUrl);
       toast.success('User deleted successfully');
       fetchUsers();

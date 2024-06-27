@@ -40,7 +40,7 @@ function CategoriesTable() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/categories');
+      const response = await axios.get('https://retailflash.up.railway.app/api/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -161,10 +161,10 @@ function CategoriesTable() {
     try {
       let response;
       if (btnSave) {
-        response = await axios.post('http://localhost:5000/api/categories', formDataToSubmit);
+        response = await axios.post('https://retailflash.up.railway.app/api/categories', formDataToSubmit);
         toast.success("Category created successfully");
       } else {
-        const updateUrl = `http://localhost:5000/api/categories/${selectedCategory._id}`;
+        const updateUrl = `https://retailflash.up.railway.app/api/categories/${selectedCategory._id}`;
         response = await axios.put(updateUrl, formDataToSubmit);
         toast.success("Category updated successfully");
       }
@@ -209,7 +209,7 @@ function CategoriesTable() {
   const handleDelete = async (index) => {
     const selectedCategory = Categories[index];
     try {
-      const deleteUrl = `http://localhost:5000/api/categories/${selectedCategory._id}`;
+      const deleteUrl = `https://retailflash.up.railway.app/api/categories/${selectedCategory._id}`;
       await axios.delete(deleteUrl);
       toast.success("Category deleted successfully");
       fetchData();

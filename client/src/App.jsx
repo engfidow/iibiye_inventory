@@ -19,7 +19,7 @@ function App() {
       if (userData && token) {
         // console.log("Token:", token); // Log the token
         try {
-          const response = await axios.get('http://localhost:5000/api/users/auth/validate-token', {
+          const response = await axios.get('https://retailflash.up.railway.app/api/users/auth/validate-token', {
             headers: {
               Authorization: `Bearer ${token}`,
             },
