@@ -46,8 +46,19 @@ function Login({ setUser }) {
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      setFormData((prevData) => ({ ...prevData, [name]: files[0] }));
-      setImagePreview(URL.createObjectURL(files[0]));
+      const file = files[0];
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Invalid File Type',
+          text: 'Only jpg, jpeg, and png files are allowed',
+          confirmButtonColor: '#F40000',
+        });
+        return;
+      }
+      setFormData((prevData) => ({ ...prevData, [name]: file }));
+      setImagePreview(URL.createObjectURL(file));
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
     }
@@ -409,7 +420,7 @@ function Login({ setUser }) {
                   </span>
                 </div>
                 {(formSubmitted && formLoginData.password === "") && <label className="text-red-700 text-xs">Please enter your password</label>}
-                <Components.Anchor href='' onClick={() => setResetStep(1)}>Forgot your password?</Components.Anchor>
+                <Components.Anchor  onClick={() => setResetStep(1)}>Forgot your password?</Components.Anchor>
                 <Components.Button type="submit">
                   {loading ? <ClipLoader size={20} color={"#fff"} /> : 'Sign In'}
                 </Components.Button>

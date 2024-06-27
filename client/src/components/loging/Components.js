@@ -76,7 +76,7 @@ export const GhostButton = styled(Button)`
   }
 `;
 
-export const Anchor = styled.a`
+export const Anchor = styled.p`
   color: #333333;
   text-decoration: none;
   font-size: 0.875rem;
