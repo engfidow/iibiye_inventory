@@ -59,9 +59,24 @@ exports.createTransaction = async (req, res) => {
 // Get All Transactions
 exports.getAllTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find()
-      .populate("userCustomerId")
-      .populate("productsList.productUid");
+    let transactions = await Transaction.find().populate("userCustomerId");
+
+    // Manually populate the productsList
+    transactions = await Promise.all(
+      transactions.map(async (transaction) => {
+        const productsList = await Promise.all(
+          transaction.productsList.map(async (product) => {
+            const productDetails = await Product.findOne({ uid: product.productUid });
+            return {
+              productUid: product.productUid,
+              details: productDetails,
+            };
+          })
+        );
+        return { ...transaction._doc, productsList };
+      })
+    );
+
     res.status(200).json(transactions);
   } catch (error) {
     res.status(400).json({ error: error.message });
