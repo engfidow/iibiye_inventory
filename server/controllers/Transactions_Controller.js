@@ -2,6 +2,9 @@ const Transaction = require("../models/Transactions");
 const Product = require('../models/Products');
 const { payByWaafiPay } = require("../paymentEvc");
 
+const mongoose = require("mongoose");
+
+
 // Create Transaction
 exports.createTransaction = async (req, res) => {
   try {
@@ -16,6 +19,12 @@ exports.createTransaction = async (req, res) => {
 
       if (waafiResponse.status) {
         console.log(waafiResponse.status);
+
+        // Process the productsList to ensure they are valid ObjectId strings
+        req.body.productsList = req.body.productsList.map(product => ({
+          productUid: product.productUid
+        }));
+
         const transaction = new Transaction(req.body);
         await transaction.save();
 
@@ -33,6 +42,11 @@ exports.createTransaction = async (req, res) => {
         });
       }
     } else {
+      // Process the productsList to ensure they are valid ObjectId strings
+      req.body.productsList = req.body.productsList.map(product => ({
+        productUid: product.productUid
+      }));
+
       const transaction = new Transaction(req.body);
       await transaction.save();
 
@@ -47,6 +61,7 @@ exports.createTransaction = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 // Get All Transactions
 exports.getAllTransactions = async (req, res) => {
