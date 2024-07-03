@@ -2,11 +2,6 @@ const Transaction = require("../models/Transactions");
 const Product = require('../models/Products');
 const { payByWaafiPay } = require("../paymentEvc");
 
-const mongoose = require("mongoose");
-
-
-
-
 // Create Transaction
 exports.createTransaction = async (req, res) => {
   try {
@@ -21,13 +16,12 @@ exports.createTransaction = async (req, res) => {
 
       if (waafiResponse.status) {
         console.log(waafiResponse.status);
-
         const transaction = new Transaction(req.body);
         await transaction.save();
 
         // Update product status to inactive
         for (const product of req.body.productsList) {
-          await Product.findOneAndUpdate({ uid: product.productUid }, { status: "inactive" });
+          await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
         }
 
         res.status(201).json(transaction);
@@ -44,7 +38,7 @@ exports.createTransaction = async (req, res) => {
 
       // Update product status to inactive
       for (const product of req.body.productsList) {
-        await Product.findOneAndUpdate({ uid: product.productUid }, { status: "inactive" });
+        await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
       }
 
       res.status(201).json(transaction);
@@ -54,29 +48,12 @@ exports.createTransaction = async (req, res) => {
   }
 };
 
-
-
 // Get All Transactions
 exports.getAllTransactions = async (req, res) => {
   try {
-    let transactions = await Transaction.find().populate("userCustomerId");
-
-    // Manually populate the productsList
-    transactions = await Promise.all(
-      transactions.map(async (transaction) => {
-        const productsList = await Promise.all(
-          transaction.productsList.map(async (product) => {
-            const productDetails = await Product.findOne({ uid: product.productUid });
-            return {
-              productUid: product.productUid,
-              details: productDetails,
-            };
-          })
-        );
-        return { ...transaction._doc, productsList };
-      })
-    );
-
+    const transactions = await Transaction.find()
+      .populate("userCustomerId")
+      .populate("productsList.productUid");
     res.status(200).json(transactions);
   } catch (error) {
     res.status(400).json({ error: error.message });
