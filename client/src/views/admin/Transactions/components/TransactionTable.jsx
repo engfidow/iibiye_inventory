@@ -24,7 +24,7 @@ function TransactionTable() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('https://retailflash.up.railway.app/api/transactions');
+      const response = await axios.get('https://retailflash.up.railway.app/api/transactions/get');
       console.log('Fetched Transactions:', response.data);
       setTransaction(response.data);
     } catch (error) {

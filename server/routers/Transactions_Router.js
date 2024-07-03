@@ -4,7 +4,7 @@ const transactionController = require('../controllers/Transactions_Controller');
 
 // CRUD routes
 router.post('/transactions', transactionController.createTransaction);
-router.get('/transactions', transactionController.getAllTransactions);
+router.get('/transactions/get', transactionController.getAllTransactions);
 router.get('/transactions/:id', transactionController.getTransaction);
 router.put('/transactions/:id', transactionController.updateTransaction);
 router.delete('/transactions/:id', transactionController.deleteTransaction);
