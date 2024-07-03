@@ -5,6 +5,8 @@ const { payByWaafiPay } = require("../paymentEvc");
 const mongoose = require("mongoose");
 
 
+
+
 // Create Transaction
 exports.createTransaction = async (req, res) => {
   try {
@@ -20,17 +22,12 @@ exports.createTransaction = async (req, res) => {
       if (waafiResponse.status) {
         console.log(waafiResponse.status);
 
-        // Process the productsList to ensure they are valid ObjectId strings
-        req.body.productsList = req.body.productsList.map(product => ({
-          productUid: product.productUid
-        }));
-
         const transaction = new Transaction(req.body);
         await transaction.save();
 
         // Update product status to inactive
         for (const product of req.body.productsList) {
-          await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+          await Product.findOneAndUpdate({ uid: product.productUid }, { status: "inactive" });
         }
 
         res.status(201).json(transaction);
@@ -42,17 +39,12 @@ exports.createTransaction = async (req, res) => {
         });
       }
     } else {
-      // Process the productsList to ensure they are valid ObjectId strings
-      req.body.productsList = req.body.productsList.map(product => ({
-        productUid: product.productUid
-      }));
-
       const transaction = new Transaction(req.body);
       await transaction.save();
 
       // Update product status to inactive
       for (const product of req.body.productsList) {
-        await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+        await Product.findOneAndUpdate({ uid: product.productUid }, { status: "inactive" });
       }
 
       res.status(201).json(transaction);
@@ -61,6 +53,7 @@ exports.createTransaction = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 
 // Get All Transactions
