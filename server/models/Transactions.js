@@ -10,7 +10,7 @@ const TransactionSchema = new mongoose.Schema(
     productsList: [
       {
         productUid: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: String,
           ref: "Product",
           required: true,
         },
