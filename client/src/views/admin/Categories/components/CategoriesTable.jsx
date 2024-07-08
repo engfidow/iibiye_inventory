@@ -5,13 +5,21 @@ import { createTheme } from "@mui/material/styles";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import axios from 'axios';
-import { MdPostAdd, MdDelete, MdEdit } from "react-icons/md";
+import { MdPostAdd, MdDelete, MdEdit, MdDownload } from "react-icons/md";
 import Modal from 'react-modal';
 import CircularProgress from '@mui/material/CircularProgress'; 
 import { toast, ToastContainer } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css'; 
 import { confirmAlert } from 'react-confirm-alert'; 
 import 'react-confirm-alert/src/react-confirm-alert.css'; 
+import NoImageCategory from "../../../../assets/noimage.png"
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { saveAs } from 'file-saver';
+import logo from "../../../../assets/logo.png";
+
+import ProgressBar from '@ramonak/react-progress-bar';
+import * as XLSX from 'xlsx';
 
 function CategoriesTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +44,9 @@ function CategoriesTable() {
     Description: "",
     icon: ""
   });
+
+  const [uploadProgress, setUploadProgress] = useState(0); // Progress state for file upload
+  const [isUploading, setIsUploading] = useState(false); // State to track if file is uploading
 
   const fetchData = async () => {
     setLoading(true);
@@ -67,16 +78,35 @@ function CategoriesTable() {
     setIsModalOpen(true);
   };
 
+  const formatDateTime = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   const columns = [
     { 
       name: "icon", 
       label: "Icon", 
       options: { 
-        customBodyRender: (value) => <img src={`https://retailflash.up.railway.app/${value}`} alt="icon" style={{ width: '50px' }} /> 
+        customBodyRender: (value) => {
+          return <img 
+          src={value ? `https://retailflash.up.railway.app/${value}` : NoImageCategory} 
+          alt="Product" 
+          style={{ height: '50px' }} 
+        />
+        
+        },
       } 
     },
     { name: "name", label: "Category Name" },
     { name: "Description", label: "Description" },
+    { 
+      name: "createdAt", 
+      label: "Date", 
+      options: {
+        customBodyRender: (value) => formatDateTime(value)
+      } 
+    },
     {
       name: "actions",
       label: "Actions",
@@ -245,6 +275,110 @@ function CategoriesTable() {
     setIsModalOpen(false);
   };
 
+  // Handle file upload
+ const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+      try {
+        setIsUploading(true);
+        const response = await axios.post('https://retailflash.up.railway.app/api/categories/bulk', jsonData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          onUploadProgress: (progressEvent) => {
+            const { loaded, total } = progressEvent;
+            let percent = Math.floor((loaded * 100) / total);
+            setUploadProgress(percent);
+          },
+        });
+
+        setIsUploading(false);
+        setUploadProgress(0);
+
+        toast.success('Products imported successfully');
+        fetchData(); // Refresh the product table
+      } catch (error) {
+        setIsUploading(false);
+        setUploadProgress(0);
+
+        if (error.response && error.response.data && error.response.data.error) {
+          toast.error(error.response.data.error);
+        } else {
+          console.error('Failed to import products:', error);
+          toast.error('Failed to import products');
+        }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    toast.error('Please upload a valid .xlsx file');
+  }
+};
+const downloadData = async (format) => {
+  const filteredCategories = Categories.map(category => ({
+    name: category.name,
+    Description: category.Description,
+    createdAt: formatDateTime(category.createdAt),
+  }));
+
+  if (format === 'xlsx') {
+    const worksheet = XLSX.utils.json_to_sheet(filteredCategories);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Categories');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, 'categories.xlsx');
+  } else if (format === 'pdf') {
+    const doc = new jsPDF();
+
+    // Add logo
+    const img = new Image();
+    img.src = logo; // Update this path
+    img.onload = () => {
+      const logoWidth = 20; // Adjust logo width
+      const logoHeight = 20; // Adjust logo height
+      const logoX = 10; // Adjust logo X position
+      const logoY = 10; // Adjust logo Y position
+
+      doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      doc.setFontSize(20);
+      doc.text('Retail Flash', 60, 20);
+      doc.setFontSize(14);
+      doc.text('Categories Report', 60, 30);
+
+      const columns = ['Name', 'Description', 'Date'];
+      const rows = filteredCategories.map(category => [
+        category.name,
+        category.Description,
+        category.createdAt,
+      ]);
+
+      doc.autoTable({
+        startY: 40,
+        head: [columns],
+        body: rows,
+      });
+
+      // Add footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(10);
+      doc.text('© 2024 Retail Flash', 10, pageHeight - 10);
+      doc.text('Contact: +252 612910628 | retailflash@info.com', 10, pageHeight - 5);
+
+      doc.save('categories.pdf');
+    };
+  }
+};
+
+
   return (
     <div className='e-container'>
       <ToastContainer />
@@ -350,6 +484,7 @@ function CategoriesTable() {
       <div>
         <CacheProvider value={MuiCache}>
           <ThemeProvider theme={createTheme()}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-3 3xl:grid-cols-6">
             <button
               type="button"
               className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
@@ -357,6 +492,33 @@ function CategoriesTable() {
             >
               <MdPostAdd className="text-lg" /> Add New Category
             </button>
+            {/* Import products button */}
+       
+            <label className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 cursor-pointer">
+              <MdPostAdd /> Import Products
+              <input type="file" accept=".xlsx" onChange={handleFileUpload} className="hidden" />
+            </label>          
+            {isUploading && (
+              <>
+                <ProgressBar completed={uploadProgress} />
+                <CircularProgress className="mt-3" />
+              </>
+            )}
+       
+       <button
+            onClick={() => downloadData('xlsx')}
+            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            <MdDownload /> Download XLSX
+          </button>
+          <button
+            onClick={() => downloadData('pdf')}
+            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            <MdDownload /> Download PDF
+          </button>
+            </div>
+            
             {loading ? (
               <div className="flex justify-center">
                 <CircularProgress />

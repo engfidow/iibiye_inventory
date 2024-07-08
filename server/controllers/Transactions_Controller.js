@@ -53,12 +53,20 @@ exports.getAllTransactions = async (req, res) => {
   try {
     const transactions = await Transaction.find()
       .populate("userCustomerId")
-      .populate("productsList.productUid");
+      .populate({
+        path: "productsList.productUid",
+        populate: {
+          path: "category", // Make sure this matches your category field name in the Product schema
+          select: "name"
+        }
+      });
+    
     res.status(200).json(transactions);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 // Get Single Transaction
 exports.getTransaction = async (req, res) => {
@@ -162,6 +170,138 @@ exports.getMonthlyProfit = async (req, res) => {
     });
 
     res.status(200).json({ sellingPrices, costPrices });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+
+
+//report data
+
+
+// Get report data (total sales and transactions) for the selected period
+exports.getReportData = async (req, res) => {
+  try {
+    const { type } = req.params;
+    let startDate, endDate;
+
+    switch (type) {
+      case 'week':
+        const currentDate = new Date();
+        startDate = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
+        endDate = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6));
+        break;
+      case 'year':
+        startDate = new Date(new Date().getFullYear(), 0, 1);
+        endDate = new Date(new Date().getFullYear(), 11, 31);
+        break;
+      case 'month':
+      default:
+        startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        break;
+    }
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+    })
+    .populate({
+      path: 'productsList.productUid',
+      select: 'name price sellingPrice category',
+      populate: { path: 'category', select: 'name' }
+    })
+    .populate('userCustomerId', 'name');
+
+    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+    const totalProfit = transactions.reduce((acc, transaction) => {
+      return acc + transaction.productsList.reduce((innerAcc, product) => {
+        return innerAcc + (product.productUid.sellingPrice - product.productUid.price);
+      }, 0);
+    }, 0);
+
+    res.status(200).json({ totalSales, totalProfit, transactions });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+// Get most profitable transactions
+exports.getMostProfitableTransactions = async (req, res) => {
+  try {
+    const transactions = await Transaction.find()
+      .populate('productsList.productUid');
+
+    let transactionProfits = transactions.map(transaction => {
+      let profit = transaction.productsList.reduce((acc, product) => {
+        return acc + (product.productUid.sellingPrice - product.productUid.price);
+      }, 0);
+      return { transaction, profit };
+    });
+
+    transactionProfits.sort((a, b) => b.profit - a.profit);
+
+    res.status(200).json(transactionProfits);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+// Get sales for the current month
+exports.getMonthlySales = async (req, res) => {
+  try {
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+    });
+
+    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+
+    res.status(200).json({ totalSales });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+// Get sales for the current year
+exports.getYearlySales = async (req, res) => {
+  try {
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const endOfYear = new Date(new Date().getFullYear(), 11, 31);
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: startOfYear, $lte: endOfYear },
+    });
+
+    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+
+    res.status(200).json({ totalSales });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
+// Get sales for the current week
+exports.getWeeklySales = async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
+    const endOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6));
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: startOfWeek, $lte: endOfWeek },
+    });
+
+    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+
+    res.status(200).json({ totalSales });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

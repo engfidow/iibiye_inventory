@@ -30,6 +30,35 @@ exports.createCategory = async (req, res) => {
     }
 };
 
+// Handle bulk import of categories
+exports.bulkImportCategory = async (req, res) => {
+    try {
+      const categories = req.body; // Expecting an array of categories
+      console.log("...............................");
+      console.log(categories);
+  
+      // Validate the format and required fields
+      for (const cat of categories) {
+        if (!cat.name || !cat.Description) {
+          return res.status(400).json({ error: 'Invalid Category format. All fields are required.' });
+        }
+  
+        // Check for existing UID
+        const existingCategory = await Category.findOne({ name: cat.name });
+        if (existingCategory) {
+          return res.status(400).json({ error: `Category ${cat.name} already exists` });
+        }
+      }
+  
+      await Category.insertMany(categories);
+  
+      res.status(201).json({ message: 'Category imported successfully' });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  };
+  
+
 exports.getAllCategories = async (req, res) => {
     try {
         const categories = await Category.find({});

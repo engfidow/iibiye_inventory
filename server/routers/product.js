@@ -26,4 +26,6 @@ router.get('/products/data/totalactive', productController.getTotalActiveProduct
 router.get('/products/fourproducts/last', productController.getLastProducts);
 
 
+// Bulk import products
+router.post('/products/bulk', productController.bulkImportProducts);
 module.exports = router;

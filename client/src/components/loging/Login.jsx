@@ -213,12 +213,7 @@ function Login({ setUser }) {
         Cookies.set('user', JSON.stringify(user), { expires: 7 });
         Cookies.set('token', token, { expires: 7 });
 
-        MySwal.fire({
-          icon: 'success',
-          title: 'Login Successful',
-          text: 'You have been logged in successfully',
-          confirmButtonColor: '#F40000',
-        });
+       
         if (user.status === 'active') {
           navigate(user.usertype === 'admin' ? '/admin/default' : '/user/default');
         } else {

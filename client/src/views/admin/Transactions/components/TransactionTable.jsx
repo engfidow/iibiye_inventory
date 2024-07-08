@@ -8,7 +8,11 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import CircularProgress from '@mui/material/CircularProgress';
 import { TextField } from '@mui/material';
-
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo from "../../../../assets/logo.png";
 function TransactionTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +80,9 @@ function TransactionTable() {
     { name: "No", options: { customBodyRenderLite: (dataIndex) => dataIndex + 1 } },
     "Transaction ID",
     "User Name",
+    "Product Names",
+    "Product Categories",
+    "Product Selling Prices",
     {
       name: "Total Price",
       options: {
@@ -95,6 +102,77 @@ function TransactionTable() {
 
   const options = {
     onRowClick: handleRowClick,
+  };
+
+  const formatDateTime = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  const downloadData = async (format) => {
+    const filteredTransactions = Transaction.map(transaction => ({
+      id: transaction._id,
+      userName: transaction.userCustomerId.name,
+      productNames: transaction.productsList.map(p => p.productUid.name).join(", "),
+      productCategories: transaction.productsList.map(p => p.productUid.category.name).join(", "),
+      productSellingPrices: transaction.productsList.map(p => `$${p.productUid.sellingPrice}`).join(", "),
+      totalPrice: formatCurrency(transaction.totalPrice),
+      profit: formatCurrency(calculateProfit(transaction.productsList)),
+      date: formatDateTime(transaction.createdAt),
+    }));
+
+    if (format === 'xlsx') {
+      const worksheet = XLSX.utils.json_to_sheet(filteredTransactions);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(data, 'transactions.xlsx');
+    } else if (format === 'pdf') {
+      const doc = new jsPDF();
+
+      // Add logo
+      const img = new Image();
+      img.src = logo; // Update this path
+      img.onload = () => {
+        const logoWidth = 20; // Adjust logo width
+        const logoHeight = 20; // Adjust logo height
+        const logoX = 10; // Adjust logo X position
+        const logoY = 10; // Adjust logo Y position
+
+        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        doc.setFontSize(20);
+        doc.text('Retail Flash', 60, 20);
+        doc.setFontSize(14);
+        doc.text('Transactions Report', 60, 30);
+
+        const columns = ['Transaction ID', 'User Name', 'Product Names', 'Product Categories', 'Product Selling Prices', 'Total Price', 'Profit', 'Date'];
+        const rows = filteredTransactions.map(transaction => [
+          transaction.id,
+          transaction.userName,
+          transaction.productNames,
+          transaction.productCategories,
+          transaction.productSellingPrices,
+          transaction.totalPrice,
+          transaction.profit,
+          transaction.date,
+        ]);
+
+        doc.autoTable({
+          startY: 40,
+          head: [columns],
+          body: rows,
+        });
+
+        // Add footer
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(10);
+        doc.text('© 2024 Retail Flash', 10, pageHeight - 10);
+        doc.text('Contact: +252 612910628 | retailflash@info.com', 10, pageHeight - 5);
+
+        doc.save('transactions.pdf');
+      };
+    }
   };
 
   return (
@@ -119,6 +197,22 @@ function TransactionTable() {
           />
         </div>
       </div>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => downloadData('xlsx')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          Download XLSX
+        </button>
+        <button
+          onClick={() => downloadData('pdf')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          Download PDF
+        </button>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-full">
           <CircularProgress />
@@ -202,9 +296,12 @@ function TransactionTable() {
                   index + 1,
                   transaction._id,
                   transaction.userCustomerId.name,
+                  transaction.productsList.map(p => p.productUid.name).join(", "),
+                  transaction.productsList.map(p => p.productUid.category.name).join(", "),
+                  transaction.productsList.map(p => `$${p.productUid.sellingPrice}`).join(", "),
                   transaction.totalPrice,
                   calculateProfit(transaction.productsList),
-                  new Date(transaction.createdAt).toLocaleDateString(),
+                  formatDateTime(transaction.createdAt)
                 ])}
                 columns={columns}
                 options={options}

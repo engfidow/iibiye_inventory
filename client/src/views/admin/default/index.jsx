@@ -30,7 +30,7 @@ const Dashboard = () => {
 
     const fetchTransactionsData = async () => {
       try {
-        const response = await axios.get("https://retailflash.up.railway.app/api/transactions");
+        const response = await axios.get("https://retailflash.up.railway.app/api/transactions/get");
         const transactions = response.data;
 
         let productSales = 0;
@@ -90,12 +90,12 @@ const Dashboard = () => {
         />
         <Widget
           icon={<IoDocuments className="h-6 w-6" />}
-          title={"Product Sales"}
+          title={"Total Sales"}
           subtitle={totalProductSales !== null ? `$${totalProductSales.toFixed(2)}` : <Skeleton width={50} />}
         />
         <Widget
           icon={<MdBarChart className="h-7 w-7" />}
-          title={"Profit"}
+          title={"Total Profit"}
           subtitle={totalProfit !== null ? `$${totalProfit.toFixed(2)}` : <Skeleton width={50} />}
         />
       </div>

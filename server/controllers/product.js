@@ -2,6 +2,7 @@
 
 const Transaction = require("../models/Transactions");
 const Product = require('../models/Products');
+const Category = require("../models/Categories");
 const multer = require('multer');
 const path = require('path');
 
@@ -32,6 +33,41 @@ const createProduct = async (req, res) => {
   }
 };
 
+
+// Handle bulk import of products
+const bulkImportProducts = async (req, res) => {
+  try {
+    const products = req.body; // Expecting an array of products
+    console.log("...............................");
+    console.log(products);
+
+    // Validate the format and required fields
+    for (const product of products) {
+      if (!product.uid || !product.name || !product.price || !product.sellingPrice || !product.category || !product.status) {
+        return res.status(400).json({ error: 'Invalid product format. All fields are required.' });
+      }
+
+      // Check for existing UID
+      const existingProduct = await Product.findOne({ uid: product.uid });
+      if (existingProduct) {
+        return res.status(400).json({ error: `Product with UID ${product.uid} already exists` });
+      }
+
+      // Convert category name to ObjectId
+      const category = await Category.findOne({ name: product.category });
+      if (!category) {
+        return res.status(400).json({ error: `Category ${product.category} not found` });
+      }
+      product.category = category._id;
+    }
+
+    await Product.insertMany(products);
+
+    res.status(201).json({ message: 'Products imported successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 // Get all products
 const getProducts = async (req, res) => {
   try {
@@ -176,7 +212,8 @@ module.exports = {
   getProductsWithstatus,
   getTotalActiveProducts,
   getLastProducts,
-  getMonthlyProfit
+  getMonthlyProfit,
+  bulkImportProducts
 };
 
 

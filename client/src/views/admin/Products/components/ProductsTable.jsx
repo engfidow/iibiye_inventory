@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Modal from 'react-modal';
-import { MdPostAdd, MdDelete, MdEdit } from 'react-icons/md';
+import { MdPostAdd, MdDelete, MdEdit, MdDownload } from 'react-icons/md';
 import MUIDataTable from 'mui-datatables';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import CircularProgress from '@mui/material/CircularProgress'; // For loading spinner
+import CircularProgress from '@mui/material/CircularProgress';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import ProgressBar from '@ramonak/react-progress-bar';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
+import NoImageProduct from "../../../../assets/noimage.png";
+import logo from "../../../../assets/logo.png";
 
 // Modal accessibility setup
 Modal.setAppElement('#root');
@@ -19,8 +27,8 @@ function ProductsTable() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading state for shimmer effect
-  const [submitLoading, setSubmitLoading] = useState(false); // Loading state for form submission
+  const [loading, setLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [validationMessages, setValidationMessages] = useState({});
   const [modalFormData, setModalFormData] = useState({
     uid: '',
@@ -36,6 +44,8 @@ function ProductsTable() {
   const [btnSave, setBtnSave] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [filterOption, setFilterOption] = useState('all');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -258,6 +268,11 @@ function ProductsTable() {
     prepend: true,
   });
 
+  const formatDateTime = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   const columns = [
     {
       name: 'image',
@@ -265,7 +280,7 @@ function ProductsTable() {
       options: {
         customBodyRender: (value) => {
           return <img 
-          src={value ? `https://retailflash.up.railway.app/${value}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'} 
+          src={value ? `https://retailflash.up.railway.app/${value}` : NoImageProduct} 
           alt="Product" 
           style={{ height: '50px' }} 
         />
@@ -277,6 +292,17 @@ function ProductsTable() {
     { name: 'name', label: 'Name' },
     { name: 'price', label: 'Price' },
     { name: 'sellingPrice', label: 'Selling Price' },
+    { 
+      name: 'category.name', 
+      label: 'Category Name' 
+    },
+    { 
+      name: 'createdAt', 
+      label: 'Date', 
+      options: {
+        customBodyRender: (value) => formatDateTime(value)
+      } 
+    },
     { 
       name: 'status', 
       label: 'Status',
@@ -313,9 +339,6 @@ function ProductsTable() {
     }
   ];
 
-  // const data = products.map((product) => [
-  //   product.image, product.uid, product.name, product.price, product.sellingPrice, product.status
-  // ]);
   const filteredProducts = products.filter(product => {
     if (filterOption === 'all') {
       return true;
@@ -325,9 +348,8 @@ function ProductsTable() {
   });
 
   const data = filteredProducts.map((product) => [
-    product.image, product.uid, product.name, product.price, product.sellingPrice, product.status
+    product.image, product.uid, product.name, product.price, product.sellingPrice, product.category.name, product.createdAt, product.status
   ]);
-
 
   const options = {
     responsive: "vertical",
@@ -335,13 +357,124 @@ function ProductsTable() {
     selectableRows: 'none',
   };
 
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        try {
+          setIsUploading(true);
+          const response = await axios.post('https://retailflash.up.railway.app/api/products/bulk', jsonData, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            onUploadProgress: (progressEvent) => {
+              const { loaded, total } = progressEvent;
+              let percent = Math.floor((loaded * 100) / total);
+              setUploadProgress(percent);
+            },
+          });
+
+          setIsUploading(false);
+          setUploadProgress(0);
+
+          toast.success('Products imported successfully');
+          fetchProducts(); // Refresh the product table
+        } catch (error) {
+          setIsUploading(false);
+          setUploadProgress(0);
+
+          if (error.response && error.response.data && error.response.data.error) {
+            toast.error(error.response.data.error);
+          } else {
+            console.error('Failed to import products:', error);
+            toast.error('Failed to import products');
+          }
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      toast.error('Please upload a valid .xlsx file');
+    }
+  };
+
+  const downloadData = async (format) => {
+    if (format === 'xlsx') {
+      const worksheet = XLSX.utils.json_to_sheet(filteredProducts.map(product => ({
+        UID: product.uid,
+        Name: product.name,
+        Price: product.price,
+        'Selling Price': product.sellingPrice,
+        Status: product.status,
+        'Category Name': product.category.name,
+        Date: formatDateTime(product.createdAt),
+      })));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(data, 'products.xlsx');
+    } else if (format === 'pdf') {
+      const doc = new jsPDF();
+  
+      // Add logo
+      const img = new Image();
+      img.src = logo;
+      img.onload = () => {
+        const logoWidth = 20; // Adjust logo width
+        const logoHeight = 20; // Adjust logo height
+        const logoX = 10; // Adjust logo X position
+        const logoY = 10; // Adjust logo Y position
+  
+        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        doc.setFontSize(20);
+        doc.text('Retail Flash', 60, 20);
+        doc.setFontSize(14);
+        doc.text('Products Report', 60, 30);
+  
+        const columns = ['UID', 'Name', 'Price', 'Selling Price', 'Status', 'Category Name', 'Date'];
+        const rows = filteredProducts.map(product => [
+          product.uid,
+          product.name,
+          product.price,
+          product.sellingPrice,
+          product.status,
+          product.category.name,
+          formatDateTime(product.createdAt),
+        ]);
+  
+        doc.autoTable({
+          startY: 40,
+          head: [columns],
+          body: rows,
+        });
+  
+        // Add footer
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(10);
+        doc.text('© 2024 Retail Flash', 10, pageHeight - 10);
+        doc.text('Contact: +252 612910628 | retailflash@info.com', 10, pageHeight - 5);
+  
+        doc.save('products.pdf');
+      };
+    } 
+  };
+  
+
+
   return (
     <div>
       <ToastContainer />
-      {/* Combo box */}
       <select
-         value={filterOption}
-         onChange={(e) => setFilterOption(e.target.value)}
+        value={filterOption}
+        onChange={(e) => setFilterOption(e.target.value)}
         className="p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full"
       >
         <option value="all">All</option>
@@ -349,15 +482,47 @@ function ProductsTable() {
         <option value="inactive">Inactive</option>
       </select>
       
-      {/* Add new product button */}
-      <button
-        onClick={handleAddNewProduct}
-        className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700"
-      >
-        <MdPostAdd /> Add New Product
-      </button>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-3 3xl:grid-cols-6">
+       
+        <button
+          onClick={handleAddNewProduct}
+          className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700"
+        >
+          <MdPostAdd /> Add New Product
+        </button>
+        
+        
+       
+          <label className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 cursor-pointer">
+            <MdPostAdd /> Import Products
+            <input type="file" accept=".xlsx" onChange={handleFileUpload} className="hidden" />
+          </label>          
+          {isUploading && (
+            <>
+              <ProgressBar completed={uploadProgress} />
+              <CircularProgress className="mt-3" />
+            </>
+          )}
       
-      {/* Table */}
+      
+        <button
+            onClick={() => downloadData('xlsx')}
+            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            <MdDownload /> Download XLSX
+          </button>
+          <button
+            onClick={() => downloadData('pdf')}
+            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            <MdDownload /> Download PDF
+          </button>
+       
+          
+          
+       
+      </div>
+      
       <CacheProvider value={MuiCache}>
         <ThemeProvider theme={createTheme()}>
           {loading ? (
@@ -370,7 +535,6 @@ function ProductsTable() {
         </ThemeProvider>
       </CacheProvider>
 
-      {/* Modal */}
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
         <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New Product' : 'Update Product'}</h2>
         {imagePreview && (
@@ -382,7 +546,6 @@ function ProductsTable() {
         )}
         <form onSubmit={handleFormSubmit} >
           <div className='grid grid-cols-2 gap-3'>
-            {/* Form inputs */}
             <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
             {validationMessages.uid && <p className="text-red-500 text-xs mt-1">{validationMessages.uid}</p>}
             <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
@@ -407,15 +570,12 @@ function ProductsTable() {
             <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
             {validationMessages.image && <p className="text-red-500 text-xs mt-1">{validationMessages.image}</p>}
           </div>
-          
-          {/* Form buttons */}
           <div className='grid grid-cols-2 gap-3'>
             <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>
               {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
             </button>
             <button type="button" onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
           </div>
-          
         </form>
       </Modal>
     </div>

@@ -1,365 +1,228 @@
-import {React, useEffect, useState }  from "react"
-import MUIDatatable from "mui-datatables"
-import { ThemeProvider } from "@mui/material/styles"
-import { createTheme } from "@mui/material/styles"
-import { CacheProvider } from "@emotion/react"
-import createCache    from "@emotion/cache"
-import axios from 'axios'
-import { MdPostAdd } from "react-icons/md"
-import Modal from 'react-modal';
-
+import React, { useEffect, useState } from "react";
+import MUIDatatable from "mui-datatables";
+import { ThemeProvider } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+import axios from 'axios';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+import Widget from "components/widget/Widget";
+import { MdBarChart } from "react-icons/md";
+import { IoDocuments } from "react-icons/io5";
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo from "../../../../assets/logo.png";
 function ReportsTable() {
-    const formattedDate = new Date().toLocaleDateString();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-const MuiCache = createCache({
-  key:"mui-datatables",
-  prepend:true
-})
+  const MuiCache = createCache({
+    key: "mui-datatables",
+    prepend: true
+  });
 
-const[income ,setIncome] = useState([]);
+  const [reportType, setReportType] = useState('month');
+  const [reportData, setReportData] = useState([]);
+  const [totalSales, setTotalSales] = useState(0);
+  const [totalProfit, setTotalProfit] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-
-
-const fetchData = async () => {
+  const fetchReportData = async (type) => {
+    setLoading(true);
     try {
-      
-      const xogta = await axios.get('https://retailflash.up.railway.app/api/income/get');
-      const reslty = xogta.data;
-      setIncome(reslty);
+      const response = await axios.get(`https://retailflash.up.railway.app/api/transactions/report/${type}`);
+      setTotalSales(response.data.totalSales);
+      setTotalProfit(response.data.totalProfit);
+      setReportData(response.data.transactions);
     } catch (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('Error fetching report data:', error);
     }
+    setLoading(false);
   };
+
   useEffect(() => {
-    // Call fetchData only when the component mounts
-    fetchData();
-  }, []);
-//   
+    fetchReportData(reportType);
+  }, [reportType]);
 
-const[responsive ,setresponsive] = useState("vertical");
-const[tableBodyHeight , settableBodyHeight] = useState("400px");
-const[tableBodyMaxHeight , settableBodyMaxHeight] = useState("");
-const[addBtn,setBtn] = useState(true);
-const[searchBtn , setsearch] = useState(true);
-const[downloadBtn , setdownload] = useState(true);
-const[printBtn , setprint] = useState(true);
-const[veiColumnsBtn , setveiwColumns] = useState(true);
-const[filterBtn, setfilter]= useState(true);
+  const columns = [
+    "No",
+    "Transaction ID",
+    "Customer Name",
+    "Product Names",
+    "Product Categories",
+    "Product Selling Prices",
+    "Payment Method",
+    "Payment Phone",
+    "Total Price",
+    "Date & Time"
+  ];
 
-const [selectedIncome, setSelectedIncome] = useState(null);
-
-const handleRowClick = (rowData, rowMeta) => {
-  
-  const selectedRowIndex = rowMeta.dataIndex;
-  const selectedExpense = income[selectedRowIndex];
-  setSelectedIncome(selectedExpense);
-  setBtnUpdate(true);
-  setBtnSave(false);
-  setIsModalOpen(true);
-};
-
-const columns =[
-  "Payment Method",
-  "Customer Email",
-  "Total Amount",
-  "Date",
-  
-
-];
-
-const options = {
-  onRowClick: handleRowClick,
-  add: addBtn,
-  search:searchBtn,
-  download : downloadBtn,
-  print : printBtn,
-  veiColumns :  veiColumnsBtn,
-  filter : filterBtn,
-  responsive,
-  tableBodyHeight,
-  tableBodyMaxHeight,
-//  onTableChange:(action ,state)=>{
-//   console.log(action);
-//   console.log(state);
-//  }
-}
-
-
-
-// ];
-const [formSubmitted, setFormSubmitted] = useState(false);
-
-    // State for form data
-    const [formData, setFormData] = useState({
-        id: "",
-        amount: "",
-        description: "",
-        date: "",
-        
-    });
-    const resetFormData = () => {
-      setFormData({
-        id: "",
-        amount: "",
-        description: "",
-        date: "",
-      });
-    };
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevData) => ({ ...prevData, [name]: value }));
-    };
-
-    useEffect(() => {
-      if (selectedIncome) {
-        setFormData({
-          id: selectedIncome.IncomeID,
-          amount: selectedIncome.Amount,
-          description: selectedIncome.Description,
-          date: selectedIncome.date,
-        });
-      }
-    }, [selectedIncome]);
-    const handleUpdate = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-    
-      if (formData.amount === "" || formData.description === "" || formattedDate === "") {
-        // Handle empty fields
-        return;
-      }
-    
-      try {
-        // Replace ':id' in the URL with the actual ID of the expense
-        const updateUrl = `https://retailflash.up.railway.app/api/income/${formData.id}`;
-    
-        // Make a PUT request to update the expense by ID
-        const response = await axios.put(updateUrl, {
-          amount: formData.amount,
-          description: formData.description,
-          date: formData.date,
-        });
-    
-        alert("Updated This Transaction:", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful update, redirect user, etc.
-      } catch (error) {
-        console.error("Error updating transaction:", error.response.data);
-        // Handle update error (e.g., display error message)
-      }
-    };
-    // delete expence by id 
-    const handleDelete = async (e) => {
-      e.preventDefault();
-      setFormSubmitted(true);
-    
-      if (formData.id === "") {
-        // Handle empty fields
-        return;
-      }
-    
-      try {
-        // Replace ':id' in the URL with the actual ID of the expense
-        const deleteUrl = `https://retailflash.up.railway.app/api/income/delete${formData.id}`;
-    
-        // Make a DELETE request to delete the expense by ID
-        const response = await axios.delete(deleteUrl);
-    
-        alert("Deleted This Transaction:", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful deletion, redirect user, etc.
-      } catch (error) {
-        console.error("Error deleting transaction:", error.response.data);
-        // Handle deletion error (e.g., display error message)
-      }
-    };
-    
-    
-const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setFormSubmitted(true);
-   
-    if (formData.amount === "" || formData.description === "" || formattedDate === "") {
-      alert("Please fill in all the fields before submitting!");
-      return;
-    }
-
-    
-   
-    try {
-     
-        // Make a POST request to your backend endpoint for user registration
-        const response = await axios.post('https://retailflash.up.railway.app/api/income', {
-            amount: formData.amount,
-            description: formData.description,
-            date: formData.date
-           
-        });
-
-        alert("Registered This Transaction :", response.data);
-        fetchData();
-        resetFormData();
-        setIsModalOpen(false);
-        // Handle successful registration, redirect user, etc.
-    } catch (error) {
-        console.error("Error registering user:", error.response.data);
-        // Handle registration error (e.g., display error message)
-    }
-};
-const handleAddNewTransaction = () => {
-   setBtnSave(true);
-   setBtnUpdate(false);
-   setIsModalOpen(true);
+  const options = {
+    responsive: "vertical",
+    tableBodyHeight: "400px"
   };
 
-  const closeModal = () => {
-    resetFormData();
-    setIsModalOpen(false);
-
+  const handleReportTypeChange = (e) => {
+    setReportType(e.target.value);
   };
-  const [btnupdate, setBtnUpdate] = useState(false);
-  const [btnsave, setBtnSave] = useState(true);
+
+  const formatDateTime = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  const getTitle = () => {
+    switch (reportType) {
+      case 'week':
+        return 'This Week\'s';
+      case 'month':
+        return 'This Month\'s';
+      case 'year':
+        return 'This Year\'s';
+      default:
+        return 'Transactions';
+    }
+  };
+
+  const downloadData = async (format) => {
+    const filteredTransactions = reportData.map(transaction => ({
+      id: transaction._id,
+      customerName: transaction.userCustomerId.name,
+      productNames: transaction.productsList.map(p => p.productUid.name).join(", "),
+      productCategories: transaction.productsList.map(p => p.productUid.category.name).join(", "),
+      productSellingPrices: transaction.productsList.map(p => `$${p.productUid.sellingPrice}`).join(", "),
+      paymentMethod: transaction.paymentMethod,
+      paymentPhone: transaction.paymentPhone,
+      totalPrice: `$${transaction.totalPrice}`,
+      date: formatDateTime(transaction.createdAt),
+    }));
+
+    if (format === 'xlsx') {
+      const worksheet = XLSX.utils.json_to_sheet(filteredTransactions);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(data, `${getTitle()}.xlsx`);
+    } else if (format === 'pdf') {
+      const doc = new jsPDF();
+
+      const img = new Image();
+      img.src = logo; // Update this path
+      img.onload = () => {
+        const logoWidth = 20; // Adjust logo width
+        const logoHeight = 20; // Adjust logo height
+        const logoX = 10; // Adjust logo X position
+        const logoY = 10; // Adjust logo Y position
+
+        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        doc.setFontSize(20);
+        doc.text('Retail Flash', 60, 20);
+        doc.setFontSize(14);
+        doc.text(`${getTitle()} Report`, 60, 30);
+
+        const columns = ['Transaction ID', 'Customer Name', 'Product Names', 'Product Categories', 'Product Selling Prices', 'Payment Method', 'Payment Phone', 'Total Price', 'Date & Time'];
+        const rows = filteredTransactions.map(transaction => [
+          transaction.id,
+          transaction.customerName,
+          transaction.productNames,
+          transaction.productCategories,
+          transaction.productSellingPrices,
+          transaction.paymentMethod,
+          transaction.paymentPhone,
+          transaction.totalPrice,
+          transaction.date,
+        ]);
+
+        doc.autoTable({
+          startY: 40,
+          head: [columns],
+          body: rows,
+        });
+
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(10);
+        doc.text('© 2024 Retail Flash', 10, pageHeight - 10);
+        doc.text('Contact: +252 612910628 | retailflash@info.com', 10, pageHeight - 5);
+
+        doc.save(`${getTitle()} Report.pdf`);
+      };
+    }
+  };
+
   return (
-    <div className='e-container'>
-         {/* Modal Component */}
-      
-      <Modal
-  className="bg-white  rounded  mx-auto p-4 fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-  isOpen={isModalOpen}
-  onRequestClose={closeModal}
-  contentLabel="Add New Transaction Modal"
-  style={{ overlay: { zIndex: 51 }, content: { width: '400px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)' } }}
->    <form onSubmit={handleFormSubmit}>
-      <div className="mb-4">
-        <h2 className="text-lg font-bold mb-4">Add New Transaction</h2>
-        {/* <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Id
-        </label>
-        <input
-          type="text"
-          id="field1"
-          name="id"
-          value={formData.id}
-          onChange={handleInputChange}
-          
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        /> */}
-        
-        <label htmlFor="field1" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Amount
-        </label>
-        <input
-          pattern="[0-9]*"
-          type="text"
-          id="field1"
-          name="amount"
-          value={formData.amount}
-          onChange={handleInputChange}
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && isNaN(formData.amount) && (
-              <label className="text-red-700 text-xs">Please enter a valid number.</label>
-            )}
-      </div>
-      <div className="mb-4">
-        <label htmlFor="field2" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Description
-        </label>
-        <input
-          type="text"
-          name="description"
-          id="field2"
-          value={formData.description}
-          onChange={handleInputChange}
-          pattern="[a-zA-Z]*"
-          title="Please enter characters (a-z) only."
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && !/^[a-zA-Z]*$/.test(formData.description) && (
-              <label className="text-red-700 text-xs">Please enter valid characters (a-z and A-Z) only.</label>
-            )}
+    <div className='e-container p-4'>
+      <div className="report-type-selector mb-4">
+        <label htmlFor="reportType" className='mr-2 font-semibold'>Select Report Type:</label>
+        <select id="reportType" value={reportType} onChange={handleReportTypeChange} className='border rounded p-2'>
+          <option value="month">This Month</option>
+          <option value="week">This Week</option>
+          <option value="year">This Year</option>
+        </select>
       </div>
      
-      <div className="mb-4">
-        <label htmlFor="field3" className="block mb-2 text-sm font-medium text-gray-900 ">
-          Date
-        </label>
-        <input
-          type="date"
-          name="date"
-          id="field3"
-          value={formData.date}
-          
-          onChange={handleInputChange}
-          className="w-full border border-blue-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 dark:border-black-500 dark:placeholder-gray-400 "
-        />
-        {formSubmitted && !formData.date && (
-              <label className="text-red-700 text-xs">Please choose a date.</label>
-            )}
+      <div className="my-10 items-center justify-between grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-2 ">
+        {loading ? (
+          <>
+            <Skeleton height={150} />
+            <Skeleton height={150} />
+          </>
+        ) : (
+          <>
+            <Widget
+              icon={<MdBarChart className="h-7 w-7" />}
+              title={"Total Sales"}
+              subtitle={`$${totalSales.toFixed(2)}`}
+            />
+            <Widget
+              icon={<IoDocuments className="h-6 w-6" />}
+              title={"Total Profit"}
+              subtitle={`$${totalProfit.toFixed(2)}`}
+            />
+          </>
+        )}
       </div>
-      
-      <div className="flex justify-end">
-      {btnupdate && <button
-          
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={handleUpdate}
-        >
-          Update
-        </button>}
-        {btnupdate && <button
-          
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={handleDelete}
-        >
-          Delete
-        </button>}
-      
-        {btnsave && <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          // onClick={handleSave}
-        >
-          Save
-        </button>}
+      <div className="flex justify-end mb-4">
         <button
-          
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
-          onClick={closeModal}
+          onClick={() => downloadData('xlsx')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
         >
-          Close
+          Download XLSX
         </button>
-        
+        <button
+          onClick={() => downloadData('pdf')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          Download PDF
+        </button>
       </div>
-      </form>
-    </Modal>
-      <div>
-       
-        <CacheProvider value={MuiCache}>
-          <ThemeProvider theme={createTheme()}>
-            {/* <button
-              type="button"
-              className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800   font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 "
-              onClick={handleAddNewTransaction}
-            >
-              <MdPostAdd className="text-lg" /> Add New Transaction
-            </button> */}
+      <CacheProvider value={MuiCache}>
+        <ThemeProvider theme={createTheme()}>
+          {loading ? (
+            <Skeleton count={10} height={40} />
+          ) : (
             <MUIDatatable
-              title={"Report"}
-              data={income.map((Income) => [Income.IncomeID, Income.Amount, Income.Description, Income.DateAdded])}
+              title={`${getTitle()} Transactions`}
+              data={reportData.map((transaction, index) => [
+                index + 1,
+                transaction._id,
+                transaction.userCustomerId.name,
+                transaction.productsList.map(p => p.productUid.name).join(", "),
+                transaction.productsList.map(p => p.productUid.category.name).join(", "),
+                transaction.productsList.map(p => `$${p.productUid.sellingPrice}`).join(", "),
+                transaction.paymentMethod,
+                transaction.paymentPhone,
+                `$${transaction.totalPrice}`,
+                formatDateTime(transaction.createdAt)
+              ])}
               columns={columns}
               options={options}
-              
             />
-          </ThemeProvider>
-        </CacheProvider>
-         
-        </div>
-        </div>
-  )
+          )}
+        </ThemeProvider>
+      </CacheProvider>
+    </div>
+  );
 }
 
-export default ReportsTable
+export default ReportsTable;
