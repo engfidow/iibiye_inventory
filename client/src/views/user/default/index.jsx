@@ -30,7 +30,7 @@ const Dashboard = () => {
 
     const fetchTransactionsData = async () => {
       try {
-        const response = await axios.get("https://iibiye.up.railway.app/api/transactions");
+        const response = await axios.get("https://iibiye.up.railway.app/api/transactions/get");
         const transactions = response.data;
 
         let productSales = 0;
