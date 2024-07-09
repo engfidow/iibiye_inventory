@@ -20,7 +20,7 @@ const TotalSpent = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get("https://retailflash.up.railway.app/api/transactions/profit/month");
+        const response = await axios.get("https://iibiye.up.railway.app//api/transactions/profit/month");
         const { sellingPrices, costPrices } = response.data;
 
         // Calculate total profit

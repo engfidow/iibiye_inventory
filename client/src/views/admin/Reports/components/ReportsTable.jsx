@@ -30,7 +30,7 @@ function ReportsTable() {
   const fetchReportData = async (type) => {
     setLoading(true);
     try {
-      const response = await axios.get(`https://retailflash.up.railway.app/api/transactions/report/${type}`);
+      const response = await axios.get(`https://iibiye.up.railway.app//api/transactions/report/${type}`);
       setTotalSales(response.data.totalSales);
       setTotalProfit(response.data.totalProfit);
       setReportData(response.data.transactions);
@@ -117,7 +117,7 @@ function ReportsTable() {
 
         doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
         doc.setFontSize(20);
-        doc.text('Retail Flash', 60, 20);
+        doc.text('Iibiye', 60, 20);
         doc.setFontSize(14);
         doc.text(`${getTitle()} Report`, 60, 30);
 
@@ -142,8 +142,8 @@ function ReportsTable() {
 
         const pageHeight = doc.internal.pageSize.height;
         doc.setFontSize(10);
-        doc.text('© 2024 Retail Flash', 10, pageHeight - 10);
-        doc.text('Contact: +252 612910628 | retailflash@info.com', 10, pageHeight - 5);
+        doc.text('© 2024 Iibiye', 10, pageHeight - 10);
+        doc.text('Contact: +252 612910628 | Iibiye@info.com', 10, pageHeight - 5);
 
         doc.save(`${getTitle()} Report.pdf`);
       };

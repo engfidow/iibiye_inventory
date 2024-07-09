@@ -12,7 +12,7 @@ const UpdateProfile = ({ user, setUser, isOpen, onRequestClose }) => {
     gender: user?.gender || "",
   });
   const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(user?.image ? `https://retailflash.up.railway.app/${user.image}` : "path/to/default/avatar.png");
+  const [imagePreview, setImagePreview] = useState(user?.image ? `https://iibiye.up.railway.app//${user.image}` : "path/to/default/avatar.png");
 
   useEffect(() => {
     setFormData({
@@ -22,7 +22,7 @@ const UpdateProfile = ({ user, setUser, isOpen, onRequestClose }) => {
       confirmPassword: "",
       gender: user?.gender || "",
     });
-    setImagePreview(user?.image ? `https://retailflash.up.railway.app/${user.image}` : "path/to/default/avatar.png");
+    setImagePreview(user?.image ? `https://iibiye.up.railway.app//${user.image}` : "path/to/default/avatar.png");
   }, [user]);
 
   const handleInputChange = (e) => {
@@ -55,7 +55,7 @@ const UpdateProfile = ({ user, setUser, isOpen, onRequestClose }) => {
     }
 
     try {
-      const response = await axios.put(`https://retailflash.up.railway.app/api/users/${user._id}`, data, {
+      const response = await axios.put(`https://iibiye.up.railway.app//api/users/${user._id}`, data, {
         headers: {
           Authorization: `Bearer ${Cookies.get('token')}`,
         },

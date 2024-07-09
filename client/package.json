@@ -1,7 +1,7 @@
 {
   "name": "Ratail Flash",
   "version": "1.0.0",
-  "proxy": "https://retailflash.up.railway.app/api",
+  "proxy": "https://iibiye.up.railway.app//api",
   "private": true,
   "dependencies": {
     "@chakra-ui/hooks": "^2.2.1",
