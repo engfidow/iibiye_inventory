@@ -4,7 +4,7 @@ import banner from "assets/img/profile/banner.png";
 import Card from "components/card";
 
 const Banner = ({ user }) => {
-  const userImage = user?.image ? `https://iibiye.up.railway.app//${user.image}` : avatar;
+  const userImage = user?.image ? `https://iibiye.up.railway.app/${user.image}` : avatar;
 
   return (
     <Card extra={"items-center w-full h-full p-[16px] bg-cover"}>

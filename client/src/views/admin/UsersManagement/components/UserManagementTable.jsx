@@ -43,7 +43,7 @@ function UserManagementTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://iibiye.up.railway.app//api/users/getall');
+      const response = await axios.get('https://iibiye.up.railway.app/api/users/getall');
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -138,14 +138,14 @@ function UserManagementTable() {
 
     try {
       if (btnSave) {
-        await axios.post('https://iibiye.up.railway.app//api/users/signup', formData, {
+        await axios.post('https://iibiye.up.railway.app/api/users/signup', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         toast.success('User added successfully');
       } else {
-        const updateUrl = `https://iibiye.up.railway.app//api/users/${selectedUser._id}`;
+        const updateUrl = `https://iibiye.up.railway.app/api/users/${selectedUser._id}`;
         await axios.put(updateUrl, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -173,7 +173,7 @@ function UserManagementTable() {
     setSelectedUser(selectedUser);
 
     try {
-      const response = await axios.get(`https://iibiye.up.railway.app//api/users/${selectedUser._id}`);
+      const response = await axios.get(`https://iibiye.up.railway.app/api/users/${selectedUser._id}`);
       const userData = response.data;
       setModalFormData({
         name: userData.name,
@@ -184,7 +184,7 @@ function UserManagementTable() {
         status: userData.status,
         image: userData.image,
       });
-      setImagePreview(`https://iibiye.up.railway.app//${userData.image}`);
+      setImagePreview(`https://iibiye.up.railway.app/${userData.image}`);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       toast.error('Failed to fetch user data');
@@ -214,7 +214,7 @@ function UserManagementTable() {
   const handleDelete = async (index) => {
     const selectedUser = users[index];
     try {
-      const deleteUrl = `https://iibiye.up.railway.app//api/users/${selectedUser._id}`;
+      const deleteUrl = `https://iibiye.up.railway.app/api/users/${selectedUser._id}`;
       await axios.delete(deleteUrl);
       toast.success('User deleted successfully');
       fetchUsers();
@@ -273,7 +273,7 @@ function UserManagementTable() {
       label: 'Image',
       options: {
         customBodyRender: (value) => {
-          return <img src={value ? `https://iibiye.up.railway.app//${value}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'}  alt="User" style={{ height: '50px' }} />;
+          return <img src={value ? `https://iibiye.up.railway.app/${value}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'}  alt="User" style={{ height: '50px' }} />;
         },
       },
     },

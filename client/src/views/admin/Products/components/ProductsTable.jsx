@@ -55,7 +55,7 @@ function ProductsTable() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://iibiye.up.railway.app//api/products');
+      const response = await axios.get('https://iibiye.up.railway.app/api/products');
       setProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -67,7 +67,7 @@ function ProductsTable() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('https://iibiye.up.railway.app//api/categories');
+      const response = await axios.get('https://iibiye.up.railway.app/api/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -149,14 +149,14 @@ function ProductsTable() {
 
     try {
       if (btnSave) {
-        await axios.post('https://iibiye.up.railway.app//api/products', formData, {
+        await axios.post('https://iibiye.up.railway.app/api/products', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         toast.success('Product added successfully');
       } else {
-        const updateUrl = `https://iibiye.up.railway.app//api/products/${selectedProduct._id}`;
+        const updateUrl = `https://iibiye.up.railway.app/api/products/${selectedProduct._id}`;
         await axios.put(updateUrl, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -187,7 +187,7 @@ function ProductsTable() {
       category: selectedProduct.category._id,
       image: selectedProduct.image,
     });
-    setImagePreview(`https://iibiye.up.railway.app//${selectedProduct.image}`);
+    setImagePreview(`https://iibiye.up.railway.app/${selectedProduct.image}`);
     setBtnUpdate(true);
     setBtnSave(false);
     setIsModalOpen(true);
@@ -212,7 +212,7 @@ function ProductsTable() {
   const handleDelete = async (index) => {
     const selectedProduct = products[index];
     try {
-      const deleteUrl = `https://iibiye.up.railway.app//api/products/${selectedProduct._id}`;
+      const deleteUrl = `https://iibiye.up.railway.app/api/products/${selectedProduct._id}`;
       await axios.delete(deleteUrl);
       toast.success('Product deleted successfully');
       fetchProducts();
@@ -280,7 +280,7 @@ function ProductsTable() {
       options: {
         customBodyRender: (value) => {
           return <img 
-          src={value ? `https://iibiye.up.railway.app//${value}` : NoImageProduct} 
+          src={value ? `https://iibiye.up.railway.app/${value}` : NoImageProduct} 
           alt="Product" 
           style={{ height: '50px' }} 
         />
@@ -371,7 +371,7 @@ function ProductsTable() {
 
         try {
           setIsUploading(true);
-          const response = await axios.post('https://iibiye.up.railway.app//api/products/bulk', jsonData, {
+          const response = await axios.post('https://iibiye.up.railway.app/api/products/bulk', jsonData, {
             headers: {
               'Content-Type': 'application/json',
             },

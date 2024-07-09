@@ -8,7 +8,7 @@ const Banner = ({ user, onEditProfile }) => {
       {/* Background and profile */}
       <div className="relative flex flex-col items-center w-full bg-cover rounded-t-xl" style={{ backgroundImage: `url(${user.banner || "path/to/default/banner.png"})` }}>
         <div className="absolute -bottom-10 flex h-[120px] w-[120px] items-center justify-center rounded-full border-[6px] border-white bg-pink-400 dark:!border-navy-700 shadow-md">
-          <img className="h-full w-full rounded-full object-cover"  src={user.image ? `https://iibiye.up.railway.app//${user.image}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'}  alt="Profile" />
+          <img className="h-full w-full rounded-full object-cover"  src={user.image ? `https://iibiye.up.railway.app/${user.image}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg'}  alt="Profile" />
         </div>
       </div>
 

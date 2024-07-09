@@ -137,10 +137,10 @@ function Login({ setUser }) {
 
     setLoading(true);
     try {
-      await axios.post('https://iibiye.up.railway.app//api/users/signup', formDataWithDefaults);
+      await axios.post('https://iibiye.up.railway.app/api/users/signup', formDataWithDefaults);
 
       // Auto-login after successful registration
-      const loginResponse = await axios.post('https://iibiye.up.railway.app//api/users/login', {
+      const loginResponse = await axios.post('https://iibiye.up.railway.app/api/users/login', {
         email: formData.email,
         password: formData.password,
       });
@@ -205,7 +205,7 @@ function Login({ setUser }) {
 
     setLoading(true);
     try {
-      const response = await axios.post('https://iibiye.up.railway.app//api/users/login', formLoginData);
+      const response = await axios.post('https://iibiye.up.railway.app/api/users/login', formLoginData);
 
       if (response.status === 200) {
         const { user, token } = response.data;
@@ -252,7 +252,7 @@ function Login({ setUser }) {
 
     setLoading(true);
     try {
-      const response = await axios.post('https://iibiye.up.railway.app//api/users/send-verification-code', { email: resetEmail });
+      const response = await axios.post('https://iibiye.up.railway.app/api/users/send-verification-code', { email: resetEmail });
 
       MySwal.fire({
         icon: 'success',
@@ -334,7 +334,7 @@ function Login({ setUser }) {
 
     setLoading(true);
     try {
-      const response = await axios.post('https://iibiye.up.railway.app//api/users/update-password', {
+      const response = await axios.post('https://iibiye.up.railway.app/api/users/update-password', {
         email: resetEmail,
         newPassword, // Ensure new password is sent
       });
@@ -377,7 +377,7 @@ function Login({ setUser }) {
 
   const showAdminContact = async () => {
     try {
-      const response = await axios.get('https://iibiye.up.railway.app//api/users/getAdmin/Contact');
+      const response = await axios.get('https://iibiye.up.railway.app/api/users/getAdmin/Contact');
       setAdmins(response.data);
       setModalOpen(true);
     } catch (error) {
