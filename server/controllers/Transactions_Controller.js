@@ -1,5 +1,5 @@
 const Transaction = require("../models/Transactions");
-const Product = require('../models/Products');
+const Product = require("../models/Products");
 const { payByWaafiPay } = require("../paymentEvc");
 
 // Create Transaction
@@ -21,7 +21,9 @@ exports.createTransaction = async (req, res) => {
 
         // Update product status to inactive
         for (const product of req.body.productsList) {
-          await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+          await Product.findByIdAndUpdate(product.productUid, {
+            status: "inactive",
+          });
         }
 
         res.status(201).json(transaction);
@@ -38,7 +40,9 @@ exports.createTransaction = async (req, res) => {
 
       // Update product status to inactive
       for (const product of req.body.productsList) {
-        await Product.findByIdAndUpdate(product.productUid, { status: "inactive" });
+        await Product.findByIdAndUpdate(product.productUid, {
+          status: "inactive",
+        });
       }
 
       res.status(201).json(transaction);
@@ -57,16 +61,15 @@ exports.getAllTransactions = async (req, res) => {
         path: "productsList.productUid",
         populate: {
           path: "category", // Make sure this matches your category field name in the Product schema
-          select: "name"
-        }
+          select: "name",
+        },
       });
-    
+
     res.status(200).json(transactions);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 // Get Single Transaction
 exports.getTransaction = async (req, res) => {
@@ -144,27 +147,40 @@ exports.getTransactionByUserId = async (req, res) => {
   }
 };
 
-
 // Get profit for the current month with a limit of 10 transactions
 exports.getMonthlyProfit = async (req, res) => {
   try {
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      0
+    );
 
     const transactions = await Transaction.find({
       createdAt: { $gte: startOfMonth, $lte: endOfMonth },
-    }).populate('productsList.productUid').limit(10); // Limit the number of transactions to 10
+    })
+      .populate("productsList.productUid")
+      .limit(10); // Limit the number of transactions to 10
 
     let sellingPrices = [];
     let costPrices = [];
 
-    transactions.forEach(transaction => {
-      transaction.productsList.forEach(product => {
-        if (product.productUid && product.productUid.sellingPrice && product.productUid.price) {
+    transactions.forEach((transaction) => {
+      transaction.productsList.forEach((product) => {
+        if (
+          product.productUid &&
+          product.productUid.sellingPrice &&
+          product.productUid.price
+        ) {
           sellingPrices.push(product.productUid.sellingPrice);
           costPrices.push(product.productUid.price);
         } else {
-          console.log('Missing product details for:', product);
+          console.log("Missing product details for:", product);
         }
       });
     });
@@ -175,50 +191,73 @@ exports.getMonthlyProfit = async (req, res) => {
   }
 };
 
-
-
-
 //report data
-
 
 // Get report data (total sales and transactions) for the selected period
 exports.getReportData = async (req, res) => {
   try {
     const { type } = req.params;
     let startDate, endDate;
+    let dateFilter = {};
 
     switch (type) {
-      case 'week':
+      case "week":
         const currentDate = new Date();
-        startDate = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
-        endDate = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6));
+        startDate = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+        );
+        endDate = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6)
+        );
+        dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
         break;
-      case 'year':
+      case "year":
         startDate = new Date(new Date().getFullYear(), 0, 1);
         endDate = new Date(new Date().getFullYear(), 11, 31);
+        dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
         break;
-      case 'month':
+      case "month":
+        startDate = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          1
+        );
+        endDate = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth() + 1,
+          0
+        );
+        dateFilter = { createdAt: { $gte: startDate, $lte: endDate } };
+        break;
+      case "all":
       default:
-        startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+        // No date filter for 'all'
+        dateFilter = {};
         break;
     }
 
-    const transactions = await Transaction.find({
-      createdAt: { $gte: startDate, $lte: endDate },
-    })
-    .populate({
-      path: 'productsList.productUid',
-      select: 'name price sellingPrice category',
-      populate: { path: 'category', select: 'name' }
-    })
-    .populate('userCustomerId', 'name');
+    const transactions = await Transaction.find(dateFilter)
+      .populate({
+        path: "productsList.productUid",
+        select: "name price sellingPrice category",
+        populate: { path: "category", select: "name" },
+      })
+      .populate("userCustomerId", "name");
 
-    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+    const totalSales = transactions.reduce(
+      (acc, transaction) => acc + transaction.totalPrice,
+      0
+    );
     const totalProfit = transactions.reduce((acc, transaction) => {
-      return acc + transaction.productsList.reduce((innerAcc, product) => {
-        return innerAcc + (product.productUid.sellingPrice - product.productUid.price);
-      }, 0);
+      return (
+        acc +
+        transaction.productsList.reduce((innerAcc, product) => {
+          return (
+            innerAcc +
+            (product.productUid.sellingPrice - product.productUid.price)
+          );
+        }, 0)
+      );
     }, 0);
 
     res.status(200).json({ totalSales, totalProfit, transactions });
@@ -227,16 +266,18 @@ exports.getReportData = async (req, res) => {
   }
 };
 
-
 // Get most profitable transactions
 exports.getMostProfitableTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find()
-      .populate('productsList.productUid');
+    const transactions = await Transaction.find().populate(
+      "productsList.productUid"
+    );
 
-    let transactionProfits = transactions.map(transaction => {
+    let transactionProfits = transactions.map((transaction) => {
       let profit = transaction.productsList.reduce((acc, product) => {
-        return acc + (product.productUid.sellingPrice - product.productUid.price);
+        return (
+          acc + (product.productUid.sellingPrice - product.productUid.price)
+        );
       }, 0);
       return { transaction, profit };
     });
@@ -249,25 +290,34 @@ exports.getMostProfitableTransactions = async (req, res) => {
   }
 };
 
-
 // Get sales for the current month
 exports.getMonthlySales = async (req, res) => {
   try {
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    );
+    const endOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      0
+    );
 
     const transactions = await Transaction.find({
       createdAt: { $gte: startOfMonth, $lte: endOfMonth },
     });
 
-    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+    const totalSales = transactions.reduce(
+      (acc, transaction) => acc + transaction.totalPrice,
+      0
+    );
 
     res.status(200).json({ totalSales });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 // Get sales for the current year
 exports.getYearlySales = async (req, res) => {
@@ -279,7 +329,10 @@ exports.getYearlySales = async (req, res) => {
       createdAt: { $gte: startOfYear, $lte: endOfYear },
     });
 
-    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+    const totalSales = transactions.reduce(
+      (acc, transaction) => acc + transaction.totalPrice,
+      0
+    );
 
     res.status(200).json({ totalSales });
   } catch (error) {
@@ -287,19 +340,25 @@ exports.getYearlySales = async (req, res) => {
   }
 };
 
-
 // Get sales for the current week
 exports.getWeeklySales = async (req, res) => {
   try {
     const currentDate = new Date();
-    const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
-    const endOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6));
+    const startOfWeek = new Date(
+      currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+    );
+    const endOfWeek = new Date(
+      currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 6)
+    );
 
     const transactions = await Transaction.find({
       createdAt: { $gte: startOfWeek, $lte: endOfWeek },
     });
 
-    const totalSales = transactions.reduce((acc, transaction) => acc + transaction.totalPrice, 0);
+    const totalSales = transactions.reduce(
+      (acc, transaction) => acc + transaction.totalPrice,
+      0
+    );
 
     res.status(200).json({ totalSales });
   } catch (error) {

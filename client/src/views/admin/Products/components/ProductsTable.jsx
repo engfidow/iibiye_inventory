@@ -255,6 +255,8 @@ function ProductsTable() {
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
       width: '30rem',
+      maxHeight: '90vh', // Make sure the modal does not exceed the viewport height
+      overflowY: 'auto', // Enable vertical scrolling
       zIndex: 1000,
     },
     overlay: {
@@ -466,8 +468,6 @@ function ProductsTable() {
       };
     } 
   };
-  
-
 
   return (
     <div>
@@ -482,8 +482,7 @@ function ProductsTable() {
         <option value="inactive">Inactive</option>
       </select>
       
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-3 3xl:grid-cols-6">
-       
+      <div className="flex flex-col md:flex-row lg:flex-row 2xl:flex-row 3xl:flex-row gap-2">
         <button
           onClick={handleAddNewProduct}
           className="flex gap-3 focus:outline-none text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700"
@@ -491,38 +490,31 @@ function ProductsTable() {
           <MdPostAdd /> Add New Product
         </button>
         
-        
-       
-          <label className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 cursor-pointer">
-            <MdPostAdd /> Import Products
-            <input type="file" accept=".xlsx" onChange={handleFileUpload} className="hidden" />
-          </label>          
-          {isUploading && (
-            <>
-              <ProgressBar completed={uploadProgress} />
-              <CircularProgress className="mt-3" />
-            </>
-          )}
-      
+        <label className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 cursor-pointer">
+          <MdPostAdd /> Import Products
+          <input type="file" accept=".xlsx" onChange={handleFileUpload} className="hidden" />
+        </label>          
+        {isUploading && (
+          <>
+            <ProgressBar completed={uploadProgress} />
+            <CircularProgress className="mt-3" />
+          </>
+        )}
       
         <button
-            onClick={() => downloadData('xlsx')}
-            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <MdDownload /> Download XLSX
-          </button>
-          <button
-            onClick={() => downloadData('pdf')}
-            className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
-          >
-            <MdDownload /> Download PDF
-          </button>
-       
-          
-          
-       
+          onClick={() => downloadData('xlsx')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          <MdDownload /> Download XLSX
+        </button>
+        <button
+          onClick={() => downloadData('pdf')}
+          className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          <MdDownload /> Download PDF
+        </button>
       </div>
-      
+
       <CacheProvider value={MuiCache}>
         <ThemeProvider theme={createTheme()}>
           {loading ? (
@@ -536,47 +528,49 @@ function ProductsTable() {
       </CacheProvider>
 
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
-        <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New Product' : 'Update Product'}</h2>
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
-          />
-        )}
-        <form onSubmit={handleFormSubmit} >
-          <div className='grid grid-cols-2 gap-3'>
-            <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-            {validationMessages.uid && <p className="text-red-500 text-xs mt-1">{validationMessages.uid}</p>}
-            <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-            {validationMessages.name && <p className="text-red-500 text-xs mt-1">{validationMessages.name}</p>}
-            <input type="number" name="price" placeholder="Price" onChange={handleInputChange} value={modalFormData.price} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.price ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-            {validationMessages.price && <p className="text-red-500 text-xs mt-1">{validationMessages.price}</p>}
-            <input type="number" name="sellingPrice" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.sellingPrice} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.sellingPrice ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-            {validationMessages.sellingPrice && <p className="text-red-500 text-xs mt-1">{validationMessages.sellingPrice}</p>}
-            <select name="status" onChange={handleInputChange} value={modalFormData.status} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.status ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
-              <option value="">Select Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            {validationMessages.status && <p className="text-red-500 text-xs mt-1">{validationMessages.status}</p>}
-            <select name="category" onChange={handleInputChange} value={modalFormData.category} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.category ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
-              <option value="">Select Category</option>
-              {categories.map(category => (
-                <option key={category._id} value={category._id}>{category.name}</option>
-              ))}
-            </select>
-            {validationMessages.category && <p className="text-red-500 text-xs mt-1">{validationMessages.category}</p>}
-            <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-            {validationMessages.image && <p className="text-red-500 text-xs mt-1">{validationMessages.image}</p>}
-          </div>
-          <div className='grid grid-cols-2 gap-3'>
-            <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>
-              {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
-            </button>
-            <button type="button" onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
-          </div>
-        </form>
+        <div className="modal-content-scrollable">
+          <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New Product' : 'Update Product'}</h2>
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
+            />
+          )}
+          <form onSubmit={handleFormSubmit}>
+            <div className='grid grid-cols-2 gap-3'>
+              <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.uid && <p className="text-red-500 text-xs mt-1">{validationMessages.uid}</p>}
+              <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.name && <p className="text-red-500 text-xs mt-1">{validationMessages.name}</p>}
+              <input type="number" name="price" placeholder="Price" onChange={handleInputChange} value={modalFormData.price} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.price ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.price && <p className="text-red-500 text-xs mt-1">{validationMessages.price}</p>}
+              <input type="number" name="sellingPrice" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.sellingPrice} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.sellingPrice ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.sellingPrice && <p className="text-red-500 text-xs mt-1">{validationMessages.sellingPrice}</p>}
+              <select name="status" onChange={handleInputChange} value={modalFormData.status} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.status ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+                <option value="">Select Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              {validationMessages.status && <p className="text-red-500 text-xs mt-1">{validationMessages.status}</p>}
+              <select name="category" onChange={handleInputChange} value={modalFormData.category} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.category ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+                <option value="">Select Category</option>
+                {categories.map(category => (
+                  <option key={category._id} value={category._id}>{category.name}</option>
+                ))}
+              </select>
+              {validationMessages.category && <p className="text-red-500 text-xs mt-1">{validationMessages.category}</p>}
+              <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.image && <p className="text-red-500 text-xs mt-1">{validationMessages.image}</p>}
+            </div>
+            <div className='grid grid-cols-2 gap-3'>
+              <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>
+                {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
+              </button>
+              <button type="button" onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
+            </div>
+          </form>
+        </div>
       </Modal>
     </div>
   );

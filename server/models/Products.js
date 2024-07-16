@@ -27,6 +27,7 @@ const ProductSchema = new mongoose.Schema({
     status: {
         type: String,
         required: true,
+        default: 'active'
     },
    
     image: { type: String},

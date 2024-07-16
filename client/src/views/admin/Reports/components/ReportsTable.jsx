@@ -15,6 +15,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo from "../../../../assets/logo.png";
+
 function ReportsTable() {
   const MuiCache = createCache({
     key: "mui-datatables",
@@ -79,6 +80,8 @@ function ReportsTable() {
         return 'This Month\'s';
       case 'year':
         return 'This Year\'s';
+      case 'all':
+        return 'All Time';
       default:
         return 'Transactions';
     }
@@ -158,6 +161,7 @@ function ReportsTable() {
           <option value="month">This Month</option>
           <option value="week">This Week</option>
           <option value="year">This Year</option>
+          <option value="all">All Time</option>
         </select>
       </div>
      
@@ -182,7 +186,7 @@ function ReportsTable() {
           </>
         )}
       </div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-start mb-4">
         <button
           onClick={() => downloadData('xlsx')}
           className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
