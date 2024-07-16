@@ -254,6 +254,8 @@ function UserManagementTable() {
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
       width: '30rem',
+      maxHeight: '90vh', // Make sure the modal does not exceed the viewport height
+      overflowY: 'auto', // Enable vertical scrolling
       zIndex: 1000,
     },
     overlay: {
@@ -340,62 +342,61 @@ function UserManagementTable() {
       </CacheProvider>
 
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
-        <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New User' : 'Update User'}</h2>
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
-          />
-        )}
-        <form onSubmit={handleFormSubmit} className=''>
-          <div className="grid grid-cols-2 gap-3">
-          <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-          {validationMessages.name && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.name}</p>}
-          <input type="email" name="email" placeholder="Email" onChange={handleInputChange} value={modalFormData.email} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.email ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-          {validationMessages.email && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.email}</p>}
-          <div className="relative col-span-2">
-            <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" onChange={handleInputChange} value={modalFormData.password} className={`p-3 my-2 rounded-md border-solid ${validationMessages.password ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full pr-10`} />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
-              {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-            </button>
-            {validationMessages.password && <p className="text-red-500 text-xs mt-1">{validationMessages.password}</p>}
-          </div>
-          <select name="usertype" onChange={handleInputChange} value={modalFormData.usertype} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.usertype ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
-            <option value="">Select User Type</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-          {validationMessages.usertype && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.usertype}</p>}
-          <select name="gender" onChange={handleInputChange} value={modalFormData.gender} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.gender ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-          {validationMessages.gender && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.gender}</p>}
-          <select name="status" onChange={handleInputChange} value={modalFormData.status} className={`p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full`}>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
-          {validationMessages.image && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.image}</p>}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-          {formLoading ? (
-            <div className="flex justify-center col-span-2">
-              <CircularProgress />
-            </div>
-          ) : (
-            <>
-              <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
-              <button onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
-            </>
+        <div className="modal-content-scrollable">
+          <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New User' : 'Update User'}</h2>
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
+            />
           )}
-          </div>
-          
-          
-          
-        </form>
+          <form onSubmit={handleFormSubmit} className=''>
+            <div className="grid grid-cols-2 gap-3">
+              <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.name && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.name}</p>}
+              <input type="email" name="email" placeholder="Email" onChange={handleInputChange} value={modalFormData.email} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.email ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.email && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.email}</p>}
+              <div className="relative col-span-2">
+                <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" onChange={handleInputChange} value={modalFormData.password} className={`p-3 my-2 rounded-md border-solid ${validationMessages.password ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full pr-10`} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600">
+                  {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                </button>
+                {validationMessages.password && <p className="text-red-500 text-xs mt-1">{validationMessages.password}</p>}
+              </div>
+              <select name="usertype" onChange={handleInputChange} value={modalFormData.usertype} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.usertype ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+                <option value="">Select User Type</option>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+              {validationMessages.usertype && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.usertype}</p>}
+              <select name="gender" onChange={handleInputChange} value={modalFormData.gender} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.gender ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+              {validationMessages.gender && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.gender}</p>}
+              <select name="status" onChange={handleInputChange} value={modalFormData.status} className={`p-3 my-2 rounded-md border-solid border-blue-300 border-[1px] w-full`}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              {validationMessages.image && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.image}</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {formLoading ? (
+                <div className="flex justify-center col-span-2">
+                  <CircularProgress />
+                </div>
+              ) : (
+                <>
+                  <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Submit</button>
+                  <button onClick={closeModal} className='bg-gray-700 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>Close</button>
+                </>
+              )}
+            </div>
+          </form>
+        </div>
       </Modal>
     </div>
   );
