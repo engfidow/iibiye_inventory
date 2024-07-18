@@ -265,26 +265,13 @@ exports.sendVerificationCode = async (req, res) => {
 
 
 exports.verifyCodeAndUpdatePassword = async (req, res) => {
-    const { email, verificationCode, newPassword } = req.body;
+    const { email,  newPassword } = req.body;
     try {
-        const storedCodeDetails = verificationCodes[email];
+       
 
-        // Log the stored code details for debugging
-        console.log(`Stored details for ${email}:`, storedCodeDetails);
+       
 
-        if (!storedCodeDetails) {
-            console.log('No stored code details found for email:', email);
-            return res.status(400).send({ message: 'Invalid or expired verification code' });
-        }
-
-        console.log(`User ${email} provided code: ${verificationCode}`);
-        console.log(`Stored code: ${storedCodeDetails.code}, expires at: ${new Date(storedCodeDetails.expires)}`);
-
-        // Check if the verification code is correct and not expired
-        if (storedCodeDetails.code !== verificationCode || storedCodeDetails.expires < Date.now()) {
-            console.log('Verification code mismatch or expired');
-            return res.status(400).send({ message: 'Invalid or expired verification code' });
-        }
+       
 
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 12);

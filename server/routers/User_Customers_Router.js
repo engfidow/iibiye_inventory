@@ -22,7 +22,7 @@ router.get('/customers/email/:email', userController.getUserByEmail);
 router.post('/customers/change-password', userController.changePassword);
 
 router.post('/customers/send-verification-code', userController.sendVerificationCode);
-router.post('/customers/verify-code-update-password', userController.verifyCodeAndUpdatePassword);
+router.post('/customers/update-password', userController.verifyCodeAndUpdatePassword);
 
 
 
