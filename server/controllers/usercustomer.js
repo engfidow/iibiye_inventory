@@ -267,12 +267,6 @@ exports.sendVerificationCode = async (req, res) => {
 exports.verifyCodeAndUpdatePassword = async (req, res) => {
     const { email,  newPassword } = req.body;
     try {
-       
-
-       
-
-       
-
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 12);
 
