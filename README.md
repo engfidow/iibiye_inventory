@@ -1,15 +1,16 @@
-#🌐 Responsive Expense Traker Website
+#🌐 Responsive INVENTORY MANAGEMENT SYSTEM
 
 📸 Preview
 ![preview img](/preview.png)
-### 🔥 MERN STACK EXPENCE MANAGEMENT SYSTEM 🔥
+### 🔥  LIBIYE INVENTORY MANAGEMENT SYSTEM  🔥
 
-- Responsive Expense Website Design Using React js , Node js , Express js , and MySql
-- Contains CRUD Operation.
-- Have Report Expense And Income.
-- Contains a search & login modal.
-- Developed first with the Mobile First methodology, then for desktop.
-- Compatible with all mobile devices and with a beautiful and pleasant user interface.
+- Dashboard: Overview of total products, total sales, and total profit.
+- Product Management: Add, edit, and manage product details with ease.
+- Category Management: Organize products into categories for better structure.
+- Transaction History: Detailed logs of all sales and purchase transactions.
+- Reports: Generate and view detailed reports on sales and profits.
+- User Management: Role-based access control and user profiles.
+- Search & Authentication: Quick search functionality and secure login modal.
 
 📝 License
 Distributed under the MIT License. See LICENSE for more information.
@@ -17,7 +18,7 @@ Distributed under the MIT License. See LICENSE for more information.
 📫 Contact
 Eng Fidow - @engfidow - website: www.engfidow.com
 
-Project Link: https://github.com/engfidow/expence_Traker_MernStack
+Project Link: https://github.com/engfidow/iibiye_inventory
 git add
 
 ### Copyright 
