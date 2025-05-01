@@ -5,7 +5,7 @@ const TransactionSchema = new mongoose.Schema(
     userCustomerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserCustomer",
-      required: true,
+      
     },
     productsList: [
       {
