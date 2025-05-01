@@ -5,7 +5,7 @@ const { payByWaafiPay } = require("../paymentEvc");
 // Create Transaction
 exports.createTransaction = async (req, res) => {
   try {
-    console.lof("data...: ", req.body)
+    console.log("data...: ", req.body)
     if (req.body.paymentMethod === "EVC-PLUS") {
       const waafiResponse = await payByWaafiPay({
         phone: req.body.paymentPhone,
@@ -16,7 +16,7 @@ exports.createTransaction = async (req, res) => {
       });
 
       if (waafiResponse.status) {
-        console.lof("data: ", req.body)
+        console.log("data: ", req.body)
         console.log(waafiResponse.status);
         const transaction = new Transaction(req.body);
         await transaction.save();
