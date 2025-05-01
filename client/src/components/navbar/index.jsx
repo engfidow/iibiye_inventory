@@ -17,7 +17,7 @@ const Navbar = (props) => {
     window.location.href = '/login';
   };
 
-  const userImage = user.image ? `https://iibiye.up.railway.app/${user.image}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg';
+  const userImage = user.image ? `https://iibiye-inventory.onrender.com/${user.image}` : 'https://st3.depositphotos.com/9998432/13335/v/450/depositphotos_133352156-stock-illustration-default-placeholder-profile-icon.jpg';
 
   return (
     <nav className="sticky top-4 z-30 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">

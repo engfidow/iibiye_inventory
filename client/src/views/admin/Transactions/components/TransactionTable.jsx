@@ -28,7 +28,7 @@ function TransactionTable() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('https://iibiye.up.railway.app/api/transactions/get');
+      const response = await axios.get('https://iibiye-inventory.onrender.com/api/transactions/get');
       console.log('Fetched Transactions:', response.data);
       setTransaction(response.data);
     } catch (error) {
@@ -270,7 +270,7 @@ function TransactionTable() {
                   <h3 className="text-xl font-semibold">Products:</h3>
                   {selectedTransaction.productsList.map((product, index) => (
                     <div key={index} className="flex mb-4 items-center bg-white pl-4 rounded-md shadow-inner w-96">
-                      <img src={`https://iibiye.up.railway.app/${product.productUid.image}`} alt={product.productUid.name} className="w-16 h-16 mr-4 rounded-lg"/>
+                      <img src={`https://iibiye-inventory.onrender.com/${product.productUid.image}`} alt={product.productUid.name} className="w-16 h-16 mr-4 rounded-lg"/>
                       <div>
                         <div><strong>Name:</strong> {product.productUid.name}</div>
                         <div><strong>Price:</strong> {formatCurrency(product.productUid.sellingPrice)}</div>

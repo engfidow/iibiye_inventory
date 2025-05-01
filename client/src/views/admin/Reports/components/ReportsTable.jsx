@@ -31,7 +31,7 @@ function ReportsTable() {
   const fetchReportData = async (type) => {
     setLoading(true);
     try {
-      const response = await axios.get(`https://iibiye.up.railway.app/api/transactions/report/${type}`);
+      const response = await axios.get(`https://iibiye-inventory.onrender.com/api/transactions/report/${type}`);
       setTotalSales(response.data.totalSales);
       setTotalProfit(response.data.totalProfit);
       setReportData(response.data.transactions);

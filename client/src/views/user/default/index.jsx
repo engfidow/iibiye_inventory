@@ -21,7 +21,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTotalActiveProducts = async () => {
       try {
-        const response = await axios.get("https://iibiye.up.railway.app/api/products/data/totalactive");
+        const response = await axios.get("https://iibiye-inventory.onrender.com/api/products/data/totalactive");
         setTotalActiveProducts(response.data.total);
       } catch (error) {
         console.error("Error fetching total active products:", error);
@@ -30,7 +30,7 @@ const Dashboard = () => {
 
     const fetchTransactionsData = async () => {
       try {
-        const response = await axios.get("https://iibiye.up.railway.app/api/transactions/get");
+        const response = await axios.get("https://iibiye-inventory.onrender.com/api/transactions/get");
         const transactions = response.data;
 
         let productSales = 0;
@@ -65,7 +65,7 @@ const Dashboard = () => {
 
     const fetchLastProducts = async () => {
       try {
-        const response = await axios.get("https://iibiye.up.railway.app/api/products/fourproducts/last");
+        const response = await axios.get("https://iibiye-inventory.onrender.com/api/products/fourproducts/last");
         setTableData(response.data);
         setIsLoading(false);
       } catch (error) {

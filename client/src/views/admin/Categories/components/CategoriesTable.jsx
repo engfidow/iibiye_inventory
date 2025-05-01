@@ -51,7 +51,7 @@ function CategoriesTable() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://iibiye.up.railway.app/api/categories');
+      const response = await axios.get('https://iibiye-inventory.onrender.com/api/categories');
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -90,7 +90,7 @@ function CategoriesTable() {
       options: { 
         customBodyRender: (value) => {
           return <img 
-          src={value ? `https://iibiye.up.railway.app/${value}` : NoImageCategory} 
+          src={value ? `https://iibiye-inventory.onrender.com/${value}` : NoImageCategory} 
           alt="Product" 
           style={{ height: '50px' }} 
         />
@@ -191,10 +191,10 @@ function CategoriesTable() {
     try {
       let response;
       if (btnSave) {
-        response = await axios.post('https://iibiye.up.railway.app/api/categories', formDataToSubmit);
+        response = await axios.post('https://iibiye-inventory.onrender.com/api/categories', formDataToSubmit);
         toast.success("Category created successfully");
       } else {
-        const updateUrl = `https://iibiye.up.railway.app/api/categories/${selectedCategory._id}`;
+        const updateUrl = `https://iibiye-inventory.onrender.com/api/categories/${selectedCategory._id}`;
         response = await axios.put(updateUrl, formDataToSubmit);
         toast.success("Category updated successfully");
       }
@@ -239,7 +239,7 @@ function CategoriesTable() {
   const handleDelete = async (index) => {
     const selectedCategory = Categories[index];
     try {
-      const deleteUrl = `https://iibiye.up.railway.app/api/categories/${selectedCategory._id}`;
+      const deleteUrl = `https://iibiye-inventory.onrender.com/api/categories/${selectedCategory._id}`;
       await axios.delete(deleteUrl);
       toast.success("Category deleted successfully");
       fetchData();
@@ -289,7 +289,7 @@ function CategoriesTable() {
 
       try {
         setIsUploading(true);
-        const response = await axios.post('https://iibiye.up.railway.app/api/categories/bulk', jsonData, {
+        const response = await axios.post('https://iibiye-inventory.onrender.com/api/categories/bulk', jsonData, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -437,7 +437,7 @@ const downloadData = async (format) => {
             {formData.icon && (
               <div className="mt-2">
                 <img
-                  src={typeof formData.icon === 'string' ? `https://iibiye.up.railway.app/${formData.icon}` : URL.createObjectURL(formData.icon)}
+                  src={typeof formData.icon === 'string' ? `https://iibiye-inventory.onrender.com/${formData.icon}` : URL.createObjectURL(formData.icon)}
                   alt="Icon preview"
                   className="w-20 h-20 object-cover"
                 />

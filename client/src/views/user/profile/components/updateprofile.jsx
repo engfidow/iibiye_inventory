@@ -40,7 +40,7 @@ const UpdateProfile = ({ user, setUser }) => {
     }
 
     try {
-      const response = await axios.put(`https://iibiye.up.railway.app/api/users/${user._id}`, data, {
+      const response = await axios.put(`https://iibiye-inventory.onrender.com/api/users/${user._id}`, data, {
         headers: {
           Authorization: `Bearer ${Cookies.get('token')}`,
         },
