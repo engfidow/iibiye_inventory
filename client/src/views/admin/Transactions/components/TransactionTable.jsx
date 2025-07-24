@@ -70,22 +70,23 @@ const TransactionTable = () => {
           formatCurrency(filtered[i].productsList.reduce((sum, p) => sum + p.productUid.sellingPrice, 0))
       }
     },
-    {
-      name: "Profit",
-      options: {
-        customBodyRenderLite: (i) => {
-          const totalProfit = filtered[i].productsList.reduce(
-            (sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price),
-            0
-          );
-          return (
-            <span className={getProfitColor(totalProfit)}>
-              {`$${totalProfit}`}
-            </span>
-          );
-        }
-      }
-    },
+   {
+  name: "Profit",
+  options: {
+    customBodyRenderLite: (i) => {
+      const totalProfit = filtered[i].productsList.reduce(
+        (sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price),
+        0
+      );
+      return (
+        <span className={getProfitColor(totalProfit)}>
+          {`$${totalProfit.toFixed(4)}`}
+        </span>
+      );
+    }
+  }
+},
+
     {
       name: "Date",
       options: {
@@ -108,7 +109,9 @@ const TransactionTable = () => {
       Products: tx.productsList.map(p => p.productUid.name).join(", "),
       Price: tx.productsList.reduce((sum, p) => sum + p.productUid.price, 0),
       "Selling Price": tx.productsList.reduce((sum, p) => sum + p.productUid.sellingPrice, 0),
-      Profit: tx.productsList.reduce((sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price), 0),
+
+      Profit: tx.productsList.reduce((sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price), 0).toFixed(4),
+
       Date: new Date(tx.createdAt).toLocaleString(),
     }));
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
