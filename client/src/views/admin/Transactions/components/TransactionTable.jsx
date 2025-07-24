@@ -20,7 +20,7 @@ const TransactionTable = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const formatCurrency = (val) => `$${parseFloat(val).toFixed(2)}`;
+  const formatCurrency = (val) => `$${parseFloat(val)}`;
   const getProfitColor = (val) => val >= 0 ? "text-green-600" : "text-red-600";
   const MuiCache = createCache({ key: "mui-datatables", prepend: true });
 
@@ -78,7 +78,11 @@ const TransactionTable = () => {
             (sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price),
             0
           );
-          return <span className={getProfitColor(totalProfit)}>{formatCurrency(totalProfit)}</span>;
+          return (
+            <span className={getProfitColor(totalProfit)}>
+              {`$${totalProfit}`}
+            </span>
+          );
         }
       }
     },
@@ -121,9 +125,9 @@ const TransactionTable = () => {
       tx._id,
       tx.userCustomerId?.name || 'N/A',
       tx.productsList.map(p => p.productUid.name).join(", "),
-      `$${tx.productsList.reduce((sum, p) => sum + p.productUid.price, 0).toFixed(2)}`,
-      `$${tx.productsList.reduce((sum, p) => sum + p.productUid.sellingPrice, 0).toFixed(2)}`,
-      `$${tx.productsList.reduce((sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price), 0).toFixed(2)}`,
+      `$${tx.productsList.reduce((sum, p) => sum + p.productUid.price, 0)}`,
+      `$${tx.productsList.reduce((sum, p) => sum + p.productUid.sellingPrice, 0)}`,
+      `$${tx.productsList.reduce((sum, p) => sum + (p.productUid.sellingPrice - p.productUid.price), 0)}`,
       new Date(tx.createdAt).toLocaleString(),
     ]);
     doc.autoTable({
@@ -134,7 +138,7 @@ const TransactionTable = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-md shadow-md">
+    <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">Transaction Report</h2>
 
       <div className="flex gap-4 mb-4">
