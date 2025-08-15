@@ -15,13 +15,16 @@ import ProgressBar from '@ramonak/react-progress-bar';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import NoImageProduct from "../../../../assets/noimage.png";
 import logo from "../../../../assets/logo.png";
 
 // Modal accessibility setup
 Modal.setAppElement('#root');
+
+const API_BASE = 'https://iibiye-inventory.onrender.com';
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
+const MAX_IMAGE_SIZE_MB = 5; // optional safety
 
 function ProductsTable() {
   const [products, setProducts] = useState([]);
@@ -37,7 +40,8 @@ function ProductsTable() {
     sellingPrice: '',
     status: '',
     category: '',
-    image: null,
+    image: null, // File | null  (on edit, we keep null until user picks a new image)
+    existingImagePath: '', // string path from server when editing
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [btnUpdate, setBtnUpdate] = useState(false);
@@ -55,7 +59,7 @@ function ProductsTable() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://iibiye-inventory.onrender.com/api/products');
+      const response = await axios.get(`${API_BASE}/api/products`);
       setProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -67,7 +71,7 @@ function ProductsTable() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('https://iibiye-inventory.onrender.com/api/categories');
+      const response = await axios.get(`${API_BASE}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -81,15 +85,43 @@ function ProductsTable() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files && files.length > 0) {
-      const file = files[0];
-      setImagePreview(URL.createObjectURL(file));
-      setModalFormData(prevState => ({ ...prevState, image: file }));
-    } else {
-      setModalFormData(prevState => ({ ...prevState, [name]: value }));
+    const { name, value } = e.target;
+    setModalFormData(prev => ({ ...prev, [name]: value }));
+    setValidationMessages(prev => ({ ...prev, [name]: '' }));
+  };
+
+  // IMAGE-ONLY HANDLER
+  const handleImageChange = (e) => {
+    const { files } = e.target;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Frontend restrictions: ONLY images
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error('Only image files are allowed (jpg, jpeg, png, webp, gif).');
+      setValidationMessages(prev => ({ ...prev, image: 'Please select a valid image file.' }));
+      e.target.value = null; // reset input
+      return;
     }
-    setValidationMessages(prevMessages => ({ ...prevMessages, [name]: '' }));
+
+    // Optional: size limit
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_IMAGE_SIZE_MB) {
+      toast.error(`Image must be ≤ ${MAX_IMAGE_SIZE_MB}MB.`);
+      setValidationMessages(prev => ({ ...prev, image: `Image must be ≤ ${MAX_IMAGE_SIZE_MB}MB.` }));
+      e.target.value = null;
+      return;
+    }
+
+    setImagePreview(URL.createObjectURL(file));
+    setModalFormData(prev => ({
+      ...prev,
+      image: file,
+      // when user picks new image, we ignore existing path
+      existingImagePath: prev.existingImagePath || '',
+    }));
+    setValidationMessages(prev => ({ ...prev, image: '' }));
   };
 
   const validateForm = () => {
@@ -108,9 +140,13 @@ function ProductsTable() {
       isValid = false;
       messages.price = 'Valid price is required';
     }
-    if (!modalFormData.sellingPrice || isNaN(modalFormData.sellingPrice) || Number(modalFormData.sellingPrice) < Number(modalFormData.price)) {
+    if (
+      !modalFormData.sellingPrice ||
+      isNaN(modalFormData.sellingPrice) ||
+      Number(modalFormData.sellingPrice) < Number(modalFormData.price)
+    ) {
       isValid = false;
-      messages.sellingPrice = 'Valid selling price is required and must be greater than or equal to price';
+      messages.sellingPrice = 'Selling price must be a number ≥ price';
     }
     if (!modalFormData.status) {
       isValid = false;
@@ -120,9 +156,11 @@ function ProductsTable() {
       isValid = false;
       messages.category = 'Category is required';
     }
-    if (!modalFormData.image) {
+
+    // Image required on CREATE; on UPDATE it's optional unless user picked a new file (already validated in handler)
+    if (btnSave && !modalFormData.image) {
       isValid = false;
-      messages.image = 'Image is required';
+      messages.image = 'Product image is required';
     }
 
     setValidationMessages(messages);
@@ -138,56 +176,58 @@ function ProductsTable() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('uid', modalFormData.uid);
-    formData.append('name', modalFormData.name);
-    formData.append('price', modalFormData.price);
-    formData.append('sellingPrice', modalFormData.sellingPrice);
-    formData.append('status', modalFormData.status);
-    formData.append('category', modalFormData.category);
-    formData.append('image', modalFormData.image);
-
     try {
+      const formData = new FormData();
+      formData.append('uid', modalFormData.uid);
+      formData.append('name', modalFormData.name);
+      formData.append('price', modalFormData.price);
+      formData.append('sellingPrice', modalFormData.sellingPrice);
+      formData.append('status', modalFormData.status);
+      formData.append('category', modalFormData.category);
+
+      // Append image ONLY if a new File has been chosen
+      if (modalFormData.image instanceof File) {
+        formData.append('image', modalFormData.image);
+      }
+
       if (btnSave) {
-        await axios.post('https://iibiye-inventory.onrender.com/api/products', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+        await axios.post(`${API_BASE}/api/products`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         toast.success('Product added successfully');
       } else {
-        const updateUrl = `https://iibiye-inventory.onrender.com/api/products/${selectedProduct._id}`;
+        const updateUrl = `${API_BASE}/api/products/${selectedProduct._id}`;
         await axios.put(updateUrl, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         toast.success('Product updated successfully');
       }
+
       fetchProducts();
       resetFormData();
       setIsModalOpen(false);
     } catch (error) {
       console.error('Failed to submit product:', error);
-      toast.error('Failed to submit product');
+      toast.error(error?.response?.data?.error || 'Failed to submit product');
     } finally {
       setSubmitLoading(false);
     }
   };
 
   const handleEdit = (index) => {
-    const selectedProduct = products[index];
-    setSelectedProduct(selectedProduct);
+    const sel = products[index];
+    setSelectedProduct(sel);
     setModalFormData({
-      uid: selectedProduct.uid,
-      name: selectedProduct.name,
-      price: selectedProduct.price,
-      sellingPrice: selectedProduct.sellingPrice,
-      status: selectedProduct.status,
-      category: selectedProduct.category._id,
-      image: selectedProduct.image,
+      uid: sel.uid || '',
+      name: sel.name || '',
+      price: sel.price || '',
+      sellingPrice: sel.sellingPrice || '',
+      status: sel.status || '',
+      category: sel.category?._id || '',
+      image: null, // IMPORTANT: do not set to string; keep null until user picks new file
+      existingImagePath: sel.image || '',
     });
-    setImagePreview(`https://iibiye-inventory.onrender.com/${selectedProduct.image}`);
+    setImagePreview(sel.image ? `${API_BASE}/${sel.image}` : null);
     setBtnUpdate(true);
     setBtnSave(false);
     setIsModalOpen(true);
@@ -198,21 +238,16 @@ function ProductsTable() {
       title: 'Confirm to delete',
       message: 'Are you sure to delete this product?',
       buttons: [
-        {
-          label: 'Yes',
-          onClick: () => handleDelete(index)
-        },
-        {
-          label: 'No',
-        }
+        { label: 'Yes', onClick: () => handleDelete(index) },
+        { label: 'No' }
       ]
     });
   };
 
   const handleDelete = async (index) => {
-    const selectedProduct = products[index];
+    const sel = products[index];
     try {
-      const deleteUrl = `https://iibiye-inventory.onrender.com/api/products/${selectedProduct._id}`;
+      const deleteUrl = `${API_BASE}/api/products/${sel._id}`;
       await axios.delete(deleteUrl);
       toast.success('Product deleted successfully');
       fetchProducts();
@@ -231,11 +266,13 @@ function ProductsTable() {
       status: '',
       category: '',
       image: null,
+      existingImagePath: '',
     });
     setValidationMessages({});
     setImagePreview(null);
     setBtnUpdate(false);
     setBtnSave(true);
+    setSelectedProduct(null);
   };
 
   const handleAddNewProduct = () => {
@@ -255,8 +292,8 @@ function ProductsTable() {
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
       width: '30rem',
-      maxHeight: '90vh', // Make sure the modal does not exceed the viewport height
-      overflowY: 'auto', // Enable vertical scrolling
+      maxHeight: '90vh',
+      overflowY: 'auto',
       zIndex: 1000,
     },
     overlay: {
@@ -273,40 +310,34 @@ function ProductsTable() {
   const formatDateTime = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
     return new Date(dateString).toLocaleDateString('en-US', options);
-  };
+    };
 
   const columns = [
     {
       name: 'image',
       label: 'Image',
       options: {
-        customBodyRender: (value) => {
-          return <img 
-          src={value ? `https://iibiye-inventory.onrender.com/${value}` : NoImageProduct} 
-          alt="Product" 
-          style={{ height: '50px' }} 
-        />
-        
-        },
+        customBodyRender: (value) => (
+          <img
+            src={value ? `${API_BASE}/${value}` : NoImageProduct}
+            alt="Product"
+            style={{ height: '50px' }}
+          />
+        ),
       },
     },
     { name: 'uid', label: 'UID' },
     { name: 'name', label: 'Name' },
     { name: 'price', label: 'Price' },
     { name: 'sellingPrice', label: 'Selling Price' },
-    { 
-      name: 'category.name', 
-      label: 'Category Name' 
+    { name: 'category.name', label: 'Category Name' },
+    {
+      name: 'createdAt',
+      label: 'Date',
+      options: { customBodyRender: (value) => formatDateTime(value) }
     },
-    { 
-      name: 'createdAt', 
-      label: 'Date', 
-      options: {
-        customBodyRender: (value) => formatDateTime(value)
-      } 
-    },
-    { 
-      name: 'status', 
+    {
+      name: 'status',
       label: 'Status',
       options: {
         customBodyRender: (value) => (
@@ -322,15 +353,17 @@ function ProductsTable() {
           const rowIndex = tableMeta.rowIndex;
           return (
             <div>
-              <button 
-                onClick={() => handleEdit(rowIndex)} 
+              <button
+                onClick={() => handleEdit(rowIndex)}
                 style={{ backgroundColor: 'green', color: 'white', marginRight: '5px', padding: '5px', borderRadius: '5px' }}
+                title="Edit"
               >
                 <MdEdit />
               </button>
-              <button 
-                onClick={() => confirmDelete(rowIndex)} 
+              <button
+                onClick={() => confirmDelete(rowIndex)}
                 style={{ backgroundColor: 'red', color: 'white', padding: '5px', borderRadius: '5px' }}
+                title="Delete"
               >
                 <MdDelete />
               </button>
@@ -342,11 +375,8 @@ function ProductsTable() {
   ];
 
   const filteredProducts = products.filter(product => {
-    if (filterOption === 'all') {
-      return true;
-    } else {
-      return product.status === filterOption;
-    }
+    if (filterOption === 'all') return true;
+    return product.status === filterOption;
   });
 
   const data = filteredProducts.map((product) => [
@@ -359,7 +389,7 @@ function ProductsTable() {
     selectableRows: 'none',
   };
 
-  // Handle file upload
+  // Handle bulk file upload (.xlsx only)
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
@@ -373,10 +403,8 @@ function ProductsTable() {
 
         try {
           setIsUploading(true);
-          const response = await axios.post('https://iibiye-inventory.onrender.com/api/products/bulk', jsonData, {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          await axios.post(`${API_BASE}/api/products/bulk`, jsonData, {
+            headers: { 'Content-Type': 'application/json' },
             onUploadProgress: (progressEvent) => {
               const { loaded, total } = progressEvent;
               let percent = Math.floor((loaded * 100) / total);
@@ -388,12 +416,12 @@ function ProductsTable() {
           setUploadProgress(0);
 
           toast.success('Products imported successfully');
-          fetchProducts(); // Refresh the product table
+          fetchProducts();
         } catch (error) {
           setIsUploading(false);
           setUploadProgress(0);
 
-          if (error.response && error.response.data && error.response.data.error) {
+          if (error.response?.data?.error) {
             toast.error(error.response.data.error);
           } else {
             console.error('Failed to import products:', error);
@@ -421,26 +449,25 @@ function ProductsTable() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-      saveAs(data, 'products.xlsx');
+      const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(blob, 'products.xlsx');
     } else if (format === 'pdf') {
       const doc = new jsPDF();
-  
-      // Add logo
+
       const img = new Image();
       img.src = logo;
       img.onload = () => {
-        const logoWidth = 20; // Adjust logo width
-        const logoHeight = 20; // Adjust logo height
-        const logoX = 10; // Adjust logo X position
-        const logoY = 10; // Adjust logo Y position
-  
+        const logoWidth = 20;
+        const logoHeight = 20;
+        const logoX = 10;
+        const logoY = 10;
+
         doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
         doc.setFontSize(20);
         doc.text('Iibiye', 60, 20);
         doc.setFontSize(14);
         doc.text('Products Report', 60, 30);
-  
+
         const columns = ['UID', 'Name', 'Price', 'Selling Price', 'Status', 'Category Name', 'Date'];
         const rows = filteredProducts.map(product => [
           product.uid,
@@ -451,22 +478,21 @@ function ProductsTable() {
           product.category.name,
           formatDateTime(product.createdAt),
         ]);
-  
+
         doc.autoTable({
           startY: 40,
           head: [columns],
           body: rows,
         });
-  
-        // Add footer
+
         const pageHeight = doc.internal.pageSize.height;
         doc.setFontSize(10);
         doc.text('© 2024 Iibiye', 10, pageHeight - 10);
         doc.text('Contact: +252 612910628 | Iibiye@info.com', 10, pageHeight - 5);
-  
+
         doc.save('products.pdf');
       };
-    } 
+    }
   };
 
   return (
@@ -481,7 +507,7 @@ function ProductsTable() {
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
       </select>
-      
+
       <div className="flex flex-col md:flex-row lg:flex-row 2xl:flex-row 3xl:flex-row gap-2">
         <button
           onClick={handleAddNewProduct}
@@ -489,18 +515,18 @@ function ProductsTable() {
         >
           <MdPostAdd /> Add New Product
         </button>
-        
+
         <label className="flex gap-3 focus:outline-none text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 cursor-pointer">
           <MdPostAdd /> Import Products
           <input type="file" accept=".xlsx" onChange={handleFileUpload} className="hidden" />
-        </label>          
+        </label>
         {isUploading && (
           <>
             <ProgressBar completed={uploadProgress} />
             <CircularProgress className="mt-3" />
           </>
         )}
-      
+
         <button
           onClick={() => downloadData('xlsx')}
           className="flex gap-3 focus:outline-none text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700"
@@ -530,6 +556,7 @@ function ProductsTable() {
       <Modal isOpen={isModalOpen} onRequestClose={closeModal} style={customModalStyles}>
         <div className="modal-content-scrollable">
           <h2 style={{ color: '#333', marginBottom: '20px' }}>{btnSave ? 'Add New Product' : 'Update Product'}</h2>
+
           {imagePreview && (
             <img
               src={imagePreview}
@@ -537,32 +564,98 @@ function ProductsTable() {
               className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
             />
           )}
+          {!imagePreview && modalFormData.existingImagePath && (
+            <img
+              src={`${API_BASE}/${modalFormData.existingImagePath}`}
+              alt="Current"
+              className="mx-auto h-40 w-40 rounded-sm object-cover mb-4"
+            />
+          )}
+
           <form onSubmit={handleFormSubmit}>
             <div className='grid grid-cols-2 gap-3'>
-              <input type="text" name="uid" placeholder="UID" onChange={handleInputChange} value={modalFormData.uid} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+              <input
+                type="text"
+                name="uid"
+                placeholder="UID"
+                onChange={handleInputChange}
+                value={modalFormData.uid}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              />
               {validationMessages.uid && <p className="text-red-500 text-xs mt-1">{validationMessages.uid}</p>}
-              <input type="text" name="name" placeholder="Name" onChange={handleInputChange} value={modalFormData.name} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+
+              <input
+                type="text"
+                name="name"
+                placeholder="Name"
+                onChange={handleInputChange}
+                value={modalFormData.name}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              />
               {validationMessages.name && <p className="text-red-500 text-xs mt-1">{validationMessages.name}</p>}
-              <input type="number" name="price" placeholder="Price" onChange={handleInputChange} value={modalFormData.price} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.price ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+
+              <input
+                type="number"
+                name="price"
+                placeholder="Price"
+                onChange={handleInputChange}
+                value={modalFormData.price}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.price ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              />
               {validationMessages.price && <p className="text-red-500 text-xs mt-1">{validationMessages.price}</p>}
-              <input type="number" name="sellingPrice" placeholder="Selling Price" onChange={handleInputChange} value={modalFormData.sellingPrice} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.sellingPrice ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+
+              <input
+                type="number"
+                name="sellingPrice"
+                placeholder="Selling Price"
+                onChange={handleInputChange}
+                value={modalFormData.sellingPrice}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.sellingPrice ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              />
               {validationMessages.sellingPrice && <p className="text-red-500 text-xs mt-1">{validationMessages.sellingPrice}</p>}
-              <select name="status" onChange={handleInputChange} value={modalFormData.status} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.status ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+
+              <select
+                name="status"
+                onChange={handleInputChange}
+                value={modalFormData.status}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.status ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              >
                 <option value="">Select Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
               {validationMessages.status && <p className="text-red-500 text-xs mt-1">{validationMessages.status}</p>}
-              <select name="category" onChange={handleInputChange} value={modalFormData.category} required className={`p-3 my-2 rounded-md border-solid ${validationMessages.category ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}>
+
+              <select
+                name="category"
+                onChange={handleInputChange}
+                value={modalFormData.category}
+                required
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.category ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              >
                 <option value="">Select Category</option>
                 {categories.map(category => (
                   <option key={category._id} value={category._id}>{category.name}</option>
                 ))}
               </select>
               {validationMessages.category && <p className="text-red-500 text-xs mt-1">{validationMessages.category}</p>}
-              <input type="file" name="image" onChange={handleInputChange} className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`} />
+
+              {/* IMAGE INPUT — allow ONLY images */}
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+              />
               {validationMessages.image && <p className="text-red-500 text-xs mt-1">{validationMessages.image}</p>}
             </div>
+
             <div className='grid grid-cols-2 gap-3'>
               <button type="submit" className='bg-green-600 p-3 border-none rounded-md cursor-pointer mt-3 text-white'>
                 {submitLoading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
