@@ -22,7 +22,7 @@ const Sidebar = ({ open, onClose, user, setUser }) => {
 
       <div className="mx-[30px] mt-[50px] flex items-center">
         <div className="h-1.5 font-bold text-navy-700 dark:text-white flex items-center justify-center gap-3">
-          <img src={logo} alt="" width={30} />
+          <img src={logo} alt="" width={50} />
           <p className="text-[#000] text-[22px]">Afgarad Shop</p>
         </div>
       </div>
