@@ -40,8 +40,8 @@ function ProductsTable() {
     sellingPrice: '',
     status: '',
     category: '',
-    image: null, // File | null  (on edit, we keep null until user picks a new image)
-    existingImagePath: '', // string path from server when editing
+    image: null,
+    existingImagePath: '',
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [btnUpdate, setBtnUpdate] = useState(false);
@@ -88,6 +88,35 @@ function ProductsTable() {
     const { name, value } = e.target;
     setModalFormData(prev => ({ ...prev, [name]: value }));
     setValidationMessages(prev => ({ ...prev, [name]: '' }));
+    // Inline duplicate hint for UID/Name on create
+    if (btnSave && (name === 'uid' || name === 'name')) {
+      checkDuplicateFields(name, value);
+    }
+  };
+
+  // DUPLICATE CHECK HELPERS
+  const existsByUid = (uid, excludeId = null) =>
+    products.some(p =>
+      p.uid?.trim().toLowerCase() === uid?.trim().toLowerCase() &&
+      (excludeId ? p._id !== excludeId : true)
+    );
+
+  const existsByName = (name, excludeId = null) =>
+    products.some(p =>
+      p.name?.trim().toLowerCase() === name?.trim().toLowerCase() &&
+      (excludeId ? p._id !== excludeId : true)
+    );
+
+  const checkDuplicateFields = (field, value) => {
+    if (!value?.trim()) return;
+    if (field === 'uid' && existsByUid(value)) {
+      setValidationMessages(prev => ({ ...prev, uid: 'This UID is already registered.' }));
+      toast.warn('Product UID already registered.');
+    }
+    if (field === 'name' && existsByName(value)) {
+      setValidationMessages(prev => ({ ...prev, name: 'This product name is already registered.' }));
+      toast.warn('Product name already registered.');
+    }
   };
 
   // IMAGE-ONLY HANDLER
@@ -97,15 +126,13 @@ function ProductsTable() {
 
     const file = files[0];
 
-    // Frontend restrictions: ONLY images
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast.error('Only image files are allowed (jpg, jpeg, png, webp, gif).');
       setValidationMessages(prev => ({ ...prev, image: 'Please select a valid image file.' }));
-      e.target.value = null; // reset input
+      e.target.value = null;
       return;
     }
 
-    // Optional: size limit
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > MAX_IMAGE_SIZE_MB) {
       toast.error(`Image must be ≤ ${MAX_IMAGE_SIZE_MB}MB.`);
@@ -118,7 +145,6 @@ function ProductsTable() {
     setModalFormData(prev => ({
       ...prev,
       image: file,
-      // when user picks new image, we ignore existing path
       existingImagePath: prev.existingImagePath || '',
     }));
     setValidationMessages(prev => ({ ...prev, image: '' }));
@@ -157,10 +183,32 @@ function ProductsTable() {
       messages.category = 'Category is required';
     }
 
-    // Image required on CREATE; on UPDATE it's optional unless user picked a new file (already validated in handler)
-    if (btnSave && !modalFormData.image) {
-      isValid = false;
-      messages.image = 'Product image is required';
+    // CREATE: image required + duplicate check
+    if (btnSave) {
+      if (!modalFormData.image) {
+        isValid = false;
+        messages.image = 'Product image is required';
+      }
+      if (existsByUid(modalFormData.uid)) {
+        isValid = false;
+        messages.uid = 'This UID is already registered.';
+      }
+      if (existsByName(modalFormData.name)) {
+        isValid = false;
+        messages.name = 'This product name is already registered.';
+      }
+    }
+
+    // UPDATE: prevent duplicates (exclude current)
+    if (btnUpdate && selectedProduct?._id) {
+      if (existsByUid(modalFormData.uid, selectedProduct._id)) {
+        isValid = false;
+        messages.uid = 'Another product with this UID already exists.';
+      }
+      if (existsByName(modalFormData.name, selectedProduct._id)) {
+        isValid = false;
+        messages.name = 'Another product with this name already exists.';
+      }
     }
 
     setValidationMessages(messages);
@@ -185,12 +233,17 @@ function ProductsTable() {
       formData.append('status', modalFormData.status);
       formData.append('category', modalFormData.category);
 
-      // Append image ONLY if a new File has been chosen
       if (modalFormData.image instanceof File) {
         formData.append('image', modalFormData.image);
       }
 
       if (btnSave) {
+        // Extra pre-flight duplicate check (defensive)
+        if (existsByUid(modalFormData.uid) || existsByName(modalFormData.name)) {
+          toast.error('Product already registered. Change UID/Name.');
+          setSubmitLoading(false);
+          return;
+        }
         await axios.post(`${API_BASE}/api/products`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
@@ -208,7 +261,14 @@ function ProductsTable() {
       setIsModalOpen(false);
     } catch (error) {
       console.error('Failed to submit product:', error);
-      toast.error(error?.response?.data?.error || 'Failed to submit product');
+      const msg = error?.response?.data?.error || 'Failed to submit product';
+      const status = error?.response?.status;
+
+      if (status === 409 || /exist|duplicate|already/i.test(String(msg))) {
+        toast.error('Product already registered (duplicate UID or Name).');
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setSubmitLoading(false);
     }
@@ -224,7 +284,7 @@ function ProductsTable() {
       sellingPrice: sel.sellingPrice || '',
       status: sel.status || '',
       category: sel.category?._id || '',
-      image: null, // IMPORTANT: do not set to string; keep null until user picks new file
+      image: null,
       existingImagePath: sel.image || '',
     });
     setImagePreview(sel.image ? `${API_BASE}/${sel.image}` : null);
@@ -310,7 +370,7 @@ function ProductsTable() {
   const formatDateTime = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
     return new Date(dateString).toLocaleDateString('en-US', options);
-    };
+  };
 
   const columns = [
     {
@@ -421,11 +481,12 @@ function ProductsTable() {
           setIsUploading(false);
           setUploadProgress(0);
 
-          if (error.response?.data?.error) {
-            toast.error(error.response.data.error);
+          const msg = error?.response?.data?.error || 'Failed to import products';
+          if (error?.response?.status === 409 || /exist|duplicate|already/i.test(String(msg))) {
+            toast.error('Bulk import blocked: one or more products are already registered.');
           } else {
             console.error('Failed to import products:', error);
-            toast.error('Failed to import products');
+            toast.error(msg);
           }
         }
       };
@@ -581,9 +642,10 @@ function ProductsTable() {
                 onChange={handleInputChange}
                 value={modalFormData.uid}
                 required
-                className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.uid ? 'border-red-500' : 'border-blue-300'} border-[1px] w.full`}
+                onBlur={(e) => btnSave && checkDuplicateFields('uid', e.target.value)}
               />
-              {validationMessages.uid && <p className="text-red-500 text-xs mt-1">{validationMessages.uid}</p>}
+              {validationMessages.uid && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.uid}</p>}
 
               <input
                 type="text"
@@ -592,9 +654,10 @@ function ProductsTable() {
                 onChange={handleInputChange}
                 value={modalFormData.name}
                 required
-                className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
+                className={`p-3 my-2 rounded-md border-solid ${validationMessages.name ? 'border-red-500' : 'border-blue-300'} border-[1px] w.full`}
+                onBlur={(e) => btnSave && checkDuplicateFields('name', e.target.value)}
               />
-              {validationMessages.name && <p className="text-red-500 text-xs mt-1">{validationMessages.name}</p>}
+              {validationMessages.name && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.name}</p>}
 
               <input
                 type="number"
@@ -605,7 +668,7 @@ function ProductsTable() {
                 required
                 className={`p-3 my-2 rounded-md border-solid ${validationMessages.price ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
               />
-              {validationMessages.price && <p className="text-red-500 text-xs mt-1">{validationMessages.price}</p>}
+              {validationMessages.price && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.price}</p>}
 
               <input
                 type="number"
@@ -616,7 +679,7 @@ function ProductsTable() {
                 required
                 className={`p-3 my-2 rounded-md border-solid ${validationMessages.sellingPrice ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
               />
-              {validationMessages.sellingPrice && <p className="text-red-500 text-xs mt-1">{validationMessages.sellingPrice}</p>}
+              {validationMessages.sellingPrice && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.sellingPrice}</p>}
 
               <select
                 name="status"
@@ -629,7 +692,7 @@ function ProductsTable() {
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
-              {validationMessages.status && <p className="text-red-500 text-xs mt-1">{validationMessages.status}</p>}
+              {validationMessages.status && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.status}</p>}
 
               <select
                 name="category"
@@ -643,9 +706,8 @@ function ProductsTable() {
                   <option key={category._id} value={category._id}>{category.name}</option>
                 ))}
               </select>
-              {validationMessages.category && <p className="text-red-500 text-xs mt-1">{validationMessages.category}</p>}
+              {validationMessages.category && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.category}</p>}
 
-              {/* IMAGE INPUT — allow ONLY images */}
               <input
                 type="file"
                 name="image"
@@ -653,7 +715,7 @@ function ProductsTable() {
                 onChange={handleImageChange}
                 className={`p-3 my-2 rounded-md border-solid ${validationMessages.image ? 'border-red-500' : 'border-blue-300'} border-[1px] w-full`}
               />
-              {validationMessages.image && <p className="text-red-500 text-xs mt-1">{validationMessages.image}</p>}
+              {validationMessages.image && <p className="text-red-500 text-xs mt-1 col-span-2">{validationMessages.image}</p>}
             </div>
 
             <div className='grid grid-cols-2 gap-3'>
